@@ -81,6 +81,25 @@ def draft_ruleset_from_bible(bible: Dict[str, Any], progression_model: str = "mi
     }
 
 
+def draft_voice(style: str, sample_passages: List[str], source_text: str,
+                vocab: List[str] = None) -> Dict[str, Any]:
+    """Build a world-bible `voice` block for an imported book, GROUNDED in the source.
+
+    The GM narrates in the author's voice only if the bible carries it (surfaced by
+    `get_full_context`). To keep the voice faithful (not invented), sample passages
+    are kept ONLY when they appear verbatim in the source text — so an imported
+    book's voice is real excerpts of that author's prose, not paraphrase.
+    """
+    src = source_text or ""
+    grounded = [p.strip() for p in (sample_passages or [])
+                if p and p.strip() and p.strip() in src]
+    return {
+        "style": (style or "").strip(),
+        "sample_passages": grounded,
+        "vocab": [v.strip() for v in (vocab or []) if v and v.strip()],
+    }
+
+
 def log_token_estimate(text: str, label: str = "import") -> int:
     """Observable (never a cap) token estimate, emitted to stderr."""
     approx = len(text or "") // 4

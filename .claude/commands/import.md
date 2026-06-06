@@ -392,6 +392,48 @@ Verify: `bash tools/gm-campaign.sh switch "<campaign-name>"` then
 
 ---
 
+## Step 6.7: Capture the Narrative Voice (world-bible `voice`) — REQUIRED
+
+The GM narrates in the book's voice ONLY if `world-bible.json` carries it —
+`get_full_context` surfaces a `NARRATIVE VOICE` block (style + sample passages)
+every beat. A bible with an empty `voice` makes play read like a generic narrator,
+not like the book. Populate it from the SOURCE:
+
+- `style` — a concrete prose fingerprint of the author (sentence rhythm, diction,
+  imagery), inferred from `current-document.txt`.
+- `sample_passages` — 2-3 SHORT, **verbatim** excerpts of the author's prose from
+  the source (fair-use sized). These are the GM's imitation targets, so they must
+  be the real text, not paraphrase.
+- `vocab` — a few signature in-world terms.
+
+Use the grounding helper so only verbatim excerpts survive (it drops anything not
+found in the source), then merge into the bible and validate:
+
+```bash
+uv run python - <<'PY'
+import sys, json; sys.path.insert(0, "lib")
+from book_bible import draft_voice
+CAMP = "world-state/campaigns/<campaign-name>"
+src = open(f"{CAMP}/current-document.txt", encoding="utf-8").read()
+voice = draft_voice(
+    style="<author's prose fingerprint>",
+    sample_passages=["<verbatim excerpt 1>", "<verbatim excerpt 2>"],
+    source_text=src,
+    vocab=["<signature term>"],
+)
+bible = json.load(open(f"{CAMP}/world-bible.json"))
+bible["voice"] = voice
+json.dump(bible, open(f"{CAMP}/world-bible.json", "w"), indent=2, ensure_ascii=False)
+print("voice passages kept:", len(voice["sample_passages"]))
+PY
+uv run python lib/world_bible.py validate
+```
+
+Confirm `voice.style` is set and ≥1 `sample_passages` survived (if zero survived,
+your excerpts were not verbatim — re-copy them exactly from the source).
+
+---
+
 ## Step 7: Switch to Campaign and Show Summary
 
 ```bash
