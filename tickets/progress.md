@@ -1,6 +1,7 @@
 # Progress Log
 
 Append-only, newest first. One line per board-level event. See `README.md`.
+- 2026-06-06T20:19Z  done: world-reconciler-agent — critic+kit↔flavor+crosslink (manual lane; 1 human-judgement note)  [ss-w7k2m9]
 - 2026-06-06T20:18Z  done: world-author-agent — parameterized per-axis author (contract round-trips)  [ss-w7k2m9]
 - 2026-06-06T20:15Z  done: worldgen-tool-wrapper — gm-worldgen.sh (consolidate + compile-canon)  [ss-w7k2m9]
 - 2026-06-06T20:11Z  done: world-kit-author-agent — kit-author agent derives non-5e ruleset.json  [ss-w7k2m9]
