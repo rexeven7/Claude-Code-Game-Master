@@ -48,7 +48,14 @@ divider() {
 }
 
 ACTIVE_FILE="$ROOT/world-state/active-campaign.txt"
-[ -f "$ACTIVE_FILE" ] || { divider; printf '%s⚔ DM%s  %sno active campaign — /new-game or /import%s\n' "$DIM" "$RESET" "$DIM" "$RESET"; divider; exit 0; }
+if [ ! -f "$ACTIVE_FILE" ] || [ ! -s "$ACTIVE_FILE" ]; then
+    divider
+    printf '%s⚔ DM%s  %sno campaign yet%s\n' "$TEAL" "$RESET" "$DIM" "$RESET"
+    printf '  %s/dm%s %sto begin — import a book, build a world, or jump into a one-shot%s\n' \
+        "$TEAL" "$RESET" "$DIM" "$RESET"
+    divider
+    exit 0
+fi
 ACTIVE=$(tr -d '[:space:]' < "$ACTIVE_FILE")
 
 CAMP="$ROOT/world-state/campaigns/$ACTIVE"
@@ -57,7 +64,9 @@ OVER="$CAMP/campaign-overview.json"
 
 if [ ! -f "$CHAR" ]; then
     divider
-    printf '%s⚔ DM%s  %s%s%s  %sno character — /create-character%s\n' "$DIM" "$RESET" "$BOLD" "$ACTIVE" "$RESET" "$DIM" "$RESET"
+    printf '%s⚔ DM%s  %s%s%s  %sno character yet%s\n' "$DIM" "$RESET" "$BOLD" "$ACTIVE" "$RESET" "$DIM" "$RESET"
+    printf '  %s/dm%s %sto begin — it asks "who are you in this world?"%s\n' \
+        "$TEAL" "$RESET" "$DIM" "$RESET"
     divider
     exit 0
 fi

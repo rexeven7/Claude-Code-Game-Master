@@ -1,14 +1,12 @@
 # DM Claude
 
-**Drop any book into it. Play inside the story.**
+**Drop in a book you own. Play *that book* as its own game.**
 
-Got a favorite fantasy novel? A classic adventure module? A weird obscure sci-fi book from the 70s? Drop the PDF in, and DM Claude extracts every character, location, item, and plot thread, then drops you into that world as whoever you want to be.
+Got a favorite fantasy novel? A classic adventure module? A weird pulp sci-fi paperback from the 70s? Drop the PDF in, and DM Claude reads it, builds a game out of it, and drops you into that world as whoever you want to be.
 
-Be a character from the book, someone original, or just yourself walking into the story. Every round, the AI queries the actual source material — NPCs talk like they do in the book, locations look like the author described them, and plot points unfold the way they should... until your choices change things.
+Not a reskin. Not D&D-with-the-names-changed. When you import a book, DM Claude writes a **bespoke ruleset for that world** — its own stats, its own way of leveling up, its own signature systems (loot boxes, spice visions, train cars, whatever the book runs on). A Dune import plays like Dune. A *Dungeon Crawler Carl* import plays like *Dungeon Crawler Carl*. You don't need to know any of the rules — just say what you want to do.
 
-The [Internet Archive](https://archive.org/) is a goldmine for this. Thousands of free books, adventure modules, and old pulp novels. Jump into *IT* and help the bad guys. Drop into *Lord of the Rings* and play from Gollum's perspective. It's your call.
-
-D&D 5e rules aren't really the point — they're just there to give the story stakes and consequences. You don't need to know D&D at all, just say what you want to do.
+The [Internet Archive](https://archive.org/) is a goldmine for this. Thousands of free books, modules, and old pulp novels. Jump into *IT* and help the bad guys. Drop into *Lord of the Rings* and play from Gollum's perspective. It's your call.
 
 ---
 
@@ -34,96 +32,102 @@ cd Claude-Code-Game-Master
 ./install.sh
 ```
 
-The setup script installs everything you need — Python, uv, jq, and all project dependencies. It works on macOS and Linux with zero prior setup. You can also run it from inside Claude Code by asking the agent to set things up.
+The install script sets up everything — Python, uv, jq, and all dependencies. It works on macOS and Linux with zero prior setup. (You can also just launch Claude Code and ask it to set things up.)
 
-Once installed:
+Then play in three steps:
 
-1. Drop a PDF in the `source-material/` folder
+1. Drop a PDF into the `source-material/` folder
 2. Run `claude` to launch Claude Code
-3. Run `/dm` and let the agent guide you
+3. Run `/dm` — the agent takes it from there
 
-That's it. The AI handles world extraction, character creation, and gameplay.
+`/dm` handles importing the book, building your character, and running the game. First thing it asks: **"Who are you in this world?"** — play a character lifted straight from the book, an original of your own, or a nameless traveler who wanders in. The mechanics get figured out behind the scenes.
 
 ---
 
-## What Happens Under the Hood
+## What Makes It Different
 
-When you import a document, the system vectorizes it locally with ChromaDB and spawns extraction agents that pull the book apart into structured data. During gameplay, every scene gets grounded in real passages from your source material — the AI isn't making things up, it's drawing from the text.
+### Every book becomes its own game
 
-Everything persists. NPCs remember what you said last session. Piss off a shopkeeper? That's tracked. The system schedules consequences that fire days later in-game time. Locations change as events unfold. Plot threads track your progress. Save and restore at any point.
+When you import a document, DM Claude reads large spans of the actual text and writes a **World Bible** for it — voice, tone, factions, geography, timeline, and the systems that make that world tick. From the Bible it drafts a **World Kit**: a custom ruleset for *that* world. It shows you the draft, you confirm it, and you're playing.
 
-Specialist agents spin up on the fly. A fight starts and the monster-manual agent grabs real stat blocks. Cast a spell and the spell-caster agent looks up actual mechanics. Shopping? The gear-master has 237+ equipment items and 362+ magic items. The player never sees any of this — they just see the story — but you can always pull up the hood and see what's going on.
+The generic core underneath is deliberately thin — a single resolution system (roll vs. a difficulty), abstract health and conditions, and three ways to advance (story milestones, a resource you spend down, or classic XP levels). Everything with flavor — stat names, how combat feels, how you grow stronger — comes from the book. D&D 5e is just *one* possible kit, not the foundation.
 
-It uses the [D&D 5e API](https://www.dnd5eapi.co/) for official rules, spellbooks, monsters, and equipment. This grounds everything in real mechanics and keeps Claude from just picking numbers.
+### The world pushes the story to you
+
+Old version: the DM had to remember to go look things up. New version: **the world hands the right context to the DM at the right moment.** Every scene arrives pre-loaded with what came before — *previously on…*, the open plot threads, key facts, which NPCs are present and how they talk, the clocks ticking in the background, and any consequences about to land. No more stat-sheet amnesia where the DM knows your HP but forgot the cliffhanger.
+
+### The world keeps living
+
+- **Consequences fire on their own.** Pick a fight, make a promise, leave a body — DM Claude schedules the fallout and it triggers later when you return to a place or enough time passes. With a reason attached, and undoable if the timing's wrong.
+- **Threat clocks tick.** Named pressures (a city collapsing in 10 days, a rival closing in) advance whether you're watching or not. When a clock runs out, a beat is due.
+- **Between sessions, the world moves.** A small, bounded set of off-screen developments advance while you're away — so the place feels alive when you come back.
+
+### NPCs are people
+
+Every NPC has a goal, a secret, a shifting mood, real relationships with you, and a **canonical voice** pulled verbatim from the book. They sound like themselves, they want things, and they remember how you treated them. Piss off a shopkeeper and it sticks.
+
+### It remembers everything
+
+NPCs, locations, plot threads, facts, your whole history — all of it persists across sessions. DM Claude can recall prior events, keeps a tiered memoir of your campaign, and tracks what's canon-from-the-book versus what *you* made happen. Save and restore at any point.
+
+---
+
+## Under the Hood
+
+You never see any of this — you just see the story — but if you want to pull up the hood:
+
+- **Specialist agents spin up on demand.** A fight starts and the monster-manual agent grabs stats; cast something and the spell-caster looks up the mechanics; go shopping and the gear-master handles the inventory. They're **book-first** — they read your world's own rules before reaching for anything external.
+- **Mechanics load only when needed.** A lean always-on core routes to on-demand Skills (combat, social, skill checks, conditions, leveling, dungeon crawls, narration craft) so the heavy rules only load for the moment that needs them.
+- **D&D 5e API, when it fits.** If your world *is* D&D-flavored, the system can pull official rules, monsters, spells, and gear from the [D&D 5e API](https://www.dnd5eapi.co/) — grounding numbers in real mechanics instead of guessing. For every other book, your World Kit runs the show.
+- **Grounded in the source.** Scenes draw on real passages from your book via a local chapter index, so narration stays true to the text — until your choices change things.
 
 ---
 
 ## Advanced
 
-Everything below is handled automatically by the `/dm` command, but you can call these directly if you want manual control.
+Everything below is handled automatically by `/dm`. These are here if you want manual control.
 
-### Dependencies
+### One Command
 
-Installed automatically during setup via [uv](https://docs.astral.sh/uv/):
-
-**Core:**
-| Package | Purpose |
-|---------|---------|
-| `anthropic` | Claude API client |
-| `pdfplumber` | PDF text extraction |
-| `pypdf2` | PDF parsing |
-| `python-docx` | Word document support |
-| `python-dotenv` | Environment variable loading |
-| `requests` | HTTP requests (D&D 5e API) |
-
-**RAG (for document import):**
-| Package | Purpose |
-|---------|---------|
-| `sentence-transformers` | Text embeddings for semantic search |
-| `chromadb` | Vector database for RAG retrieval |
-
-### Slash Commands
+There's really just one command you ever need:
 
 | Command | What it does |
 |---------|--------------|
-| `/dm` | Start or continue your story |
-| `/dm save` | Save your progress |
-| `/dm character` | View your character sheet |
-| `/dm overview` | See the world state |
-| `/new-game` | Create a world from scratch |
-| `/create-character` | Build your character |
+| `/dm` | **Everything.** Start or continue your story. From here the DM imports a book, builds a world, creates your character, runs a one-shot, saves, and shows your sheet — just talk to it. |
+
+`/dm` also takes shortcuts if you want them: `/dm save`, `/dm character`, `/dm overview`.
+
+Under the hood, `/dm` calls these for you — you never have to run them yourself, but they exist for manual control:
+
+| Command | What it does |
+|---------|--------------|
 | `/import` | Import a PDF/document as a new campaign |
-| `/enhance` | Enrich entities with source material via RAG |
+| `/new-game` | Build a world from scratch |
+| `/create-character` | Build a character in detail |
+| `/enhance` | Enrich entities with source-material passages |
 | `/world-check` | Validate campaign consistency |
 | `/reset` | Clear campaign state |
 | `/setup` | Verify/fix installation |
 | `/help` | Full command reference |
 
-### Bash Tools
+### On-Demand Skills
 
-All tools follow the pattern: `bash tools/dm-<tool>.sh <command> [args]`
+The lean core loads these only when the moment calls for it:
 
-| Tool | Purpose |
-|------|---------|
-| `dm-campaign.sh` | Create, list, switch, and delete campaigns |
-| `dm-session.sh` | Session lifecycle, party movement, save/restore |
-| `dm-player.sh` | Player stats — HP, XP, gold, inventory, conditions |
-| `dm-npc.sh` | NPC creation, updates, party member management |
-| `dm-location.sh` | Location creation and connections |
-| `dm-plot.sh` | Quest and storyline tracking |
-| `dm-search.sh` | Search world state and/or source material |
-| `dm-enhance.sh` | RAG-powered entity enrichment |
-| `dm-extract.sh` | Document import and extraction pipeline |
-| `dm-consequence.sh` | Future event scheduling and triggers |
-| `dm-condition.sh` | Player condition tracking (poisoned, stunned, etc.) |
-| `dm-note.sh` | Record world facts by category |
-| `dm-time.sh` | Advance in-game time |
-| `dm-overview.sh` | Quick world state summary |
-| `dm-reset.sh` | Reset campaign data |
+| Skill | Loaded when |
+|-------|-------------|
+| `dm-combat` | A fight breaks out |
+| `dm-spellcasting` | You cast something |
+| `dm-social` | You talk to / read an NPC |
+| `dm-skills` | You attempt something uncertain |
+| `dm-dungeon` | You enter a cave, ruin, or complex |
+| `dm-conditions` | A status effect is applied |
+| `dm-levelup` | You hit a milestone |
+| `dm-craft` | Narration and pacing wisdom |
 
 ### Specialist Agents
 
-These spawn automatically during gameplay when context demands it:
+Spawn automatically during play, invisibly:
 
 | Agent | Triggered by |
 |-------|--------------|
@@ -131,17 +135,50 @@ These spawn automatically during gameplay when context demands it:
 | `spell-caster` | Casting spells |
 | `rules-master` | Mechanical edge cases |
 | `gear-master` | Shopping, identifying gear |
-| `loot-dropper` | Victory, treasure discovery |
+| `loot-dropper` | Victory, treasure |
 | `npc-builder` | Meeting new NPCs |
 | `world-builder` | Exploring new areas |
 | `dungeon-architect` | Entering dungeons |
 | `create-character` | New characters |
 
+### Bash Tools
+
+All tools follow the pattern `bash tools/dm-<tool>.sh <command> [args]`. Most accept `--json` for structured output.
+
+| Tool | Purpose |
+|------|---------|
+| `dm-campaign.sh` | Create, list, switch, delete campaigns |
+| `dm-session.sh` | Session lifecycle, party movement, save/restore |
+| `dm-context.sh` | Assemble scene context (world state + source passages) |
+| `dm-player.sh` | Player stats — health, progression, gold, inventory |
+| `dm-npc.sh` | NPCs — creation, updates, mood/goal/voice, party members |
+| `dm-location.sh` | Locations and connections |
+| `dm-plot.sh` | Quest and storyline tracking |
+| `dm-combat.sh` | Persisted, resumable combat tracking |
+| `dm-condition.sh` | Player conditions (poisoned, stunned, etc.) |
+| `dm-consequence.sh` | Schedule future events and triggers |
+| `dm-recall.sh` | Surface prior events from campaign memory |
+| `dm-note.sh` | Record world facts by category |
+| `dm-time.sh` | Advance in-game time |
+| `dm-search.sh` | Search world state and/or source material |
+| `dm-enhance.sh` | RAG-powered entity enrichment |
+| `dm-extract.sh` | Document import and extraction pipeline |
+| `dm-overview.sh` | Quick world-state summary |
+| `dm-reset.sh` | Reset campaign data |
+
+### Dependencies
+
+Installed automatically during setup via [uv](https://docs.astral.sh/uv/):
+
+**Core:** `anthropic` (Claude API client), `pdfplumber` + `pypdf2` (PDF extraction), `python-docx` (Word docs), `python-dotenv` (env loading), `requests` (D&D 5e API).
+
+**RAG (document import):** `sentence-transformers` (embeddings), `chromadb` (vector index for source lookups).
+
 ---
 
 ## License
 
-This work is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) — free to share and adapt for non-commercial use. See [LICENSE](LICENSE) for details.
+Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) — free to share and adapt for non-commercial use. See [LICENSE](LICENSE) for details.
 
 ---
 
