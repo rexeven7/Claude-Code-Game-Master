@@ -45,6 +45,14 @@ case "$ACTION" in
         $PYTHON_CMD "$LIB_DIR/consequence_manager.py" tick
         ;;
 
+    log)
+        $PYTHON_CMD "$LIB_DIR/consequence_manager.py" log
+        ;;
+
+    rollback)
+        $PYTHON_CMD "$LIB_DIR/consequence_manager.py" rollback
+        ;;
+
     resolve)
         if [ "$#" -lt 1 ]; then
             echo "Usage: dm-consequence.sh resolve <id>"

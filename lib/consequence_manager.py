@@ -181,6 +181,9 @@ class ConsequenceManager(EntityManager):
         """
         data = self.json_ops.load_json(self.consequences_file)
         active = data.get('active', [])
+        # Pre-fire snapshot for one-beat rollback (shallow copies; fields are scalar).
+        pre_active = [dict(c) for c in active]
+        pre_resolved = [dict(c) for c in data.get('resolved', [])]
         ctx_key = "|".join([
             str(world_state.get('location', '')),
             str(world_state.get('time', '')),
@@ -211,8 +214,40 @@ class ConsequenceManager(EntityManager):
             data['active'] = survivors
             if expired:
                 data.setdefault('resolved', []).extend(expired)
+            # Provenance ("why did this fire") + one-beat rollback snapshot.
+            data['_snapshot'] = {'active': pre_active, 'resolved': pre_resolved}
+            now = self.json_ops.get_timestamp()
+            prov = data.setdefault('provenance', [])
+            for hit in fired:
+                prov.append({
+                    'id': hit['id'],
+                    'consequence': hit['consequence'],
+                    'reason': hit['match_reason'],
+                    'ctx_key': ctx_key,
+                    'fired_at': now,
+                })
             self.json_ops.save_json(self.consequences_file, data)
         return fired
+
+    def get_provenance(self) -> List[Dict[str, Any]]:
+        """Return the 'why did this fire' log (newest last)."""
+        data = self.json_ops.load_json(self.consequences_file)
+        return data.get('provenance', [])
+
+    def rollback_last(self) -> bool:
+        """Undo the most recent reactive beat (restore active/resolved to pre-fire)."""
+        data = self.json_ops.load_json(self.consequences_file)
+        snap = data.get('_snapshot')
+        if not snap:
+            print("[ERROR] No reactive beat to roll back")
+            return False
+        data['active'] = snap.get('active', data.get('active', []))
+        data['resolved'] = snap.get('resolved', data.get('resolved', []))
+        data['_snapshot'] = None
+        if self.json_ops.save_json(self.consequences_file, data):
+            print("[SUCCESS] Rolled back the last reactive beat")
+            return True
+        return False
 
     def tick_from_session(self, limit: int = 2) -> List[Dict[str, Any]]:
         """Build world_state from current campaign state, then tick()."""
@@ -302,6 +337,10 @@ def main():
     # Tick (reactivity): fire matching consequences for the current scene
     subparsers.add_parser('tick', help='Fire consequences whose triggers match the current scene')
 
+    # Provenance + rollback
+    subparsers.add_parser('log', help='Show the reactive firing provenance log')
+    subparsers.add_parser('rollback', help='Undo the most recent reactive beat')
+
     # Resolve
     resolve_parser = subparsers.add_parser('resolve', help='Resolve a consequence')
     resolve_parser.add_argument('id', help='Consequence ID')
@@ -341,6 +380,20 @@ def main():
                 print(f"      ↳ fired because: {c['match_reason']} (veto if the timing's wrong)")
         else:
             print("[REACTIVITY] (nothing triggered here)")
+
+    elif args.action == 'log':
+        prov = manager.get_provenance()
+        if not prov:
+            print("No reactive firings logged")
+        else:
+            print(f"{len(prov)} reactive firing(s):")
+            for p in prov:
+                print(f"  [{p['id']}] {p['consequence']}")
+                print(f"      ↳ {p['reason']} @ {p['fired_at']}")
+
+    elif args.action == 'rollback':
+        if not manager.rollback_last():
+            sys.exit(1)
 
     elif args.action == 'resolve':
         if not manager.resolve(args.id):
