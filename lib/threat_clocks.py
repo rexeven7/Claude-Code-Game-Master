@@ -28,9 +28,15 @@ class ThreatClockManager(EntityManager):
     def _load(self) -> Dict[str, Any]:
         return self.json_ops.load_json(self.clocks_file) or {}
 
-    def add_clock(self, name: str, segments: int, advance_on: str = "time") -> Dict[str, Any]:
+    def add_clock(self, name: str, segments: int, advance_on: str = "time",
+                  consequence: str = None, linked_plot: str = None) -> Dict[str, Any]:
         data = self._load()
-        data[name] = {"current": 0, "max": int(segments), "advance_on": advance_on}
+        entry = {"current": 0, "max": int(segments), "advance_on": advance_on}
+        if consequence:
+            entry["consequence"] = consequence
+        if linked_plot:
+            entry["linked_plot"] = linked_plot
+        data[name] = entry
         self.json_ops.save_json(self.clocks_file, data)
         return data[name]
 

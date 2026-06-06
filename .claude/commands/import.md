@@ -266,6 +266,11 @@ bash tools/dm-extract.sh reconcile "<campaign-name>"
 # on any unresolved reference (after reconcile has stubbed/rewritten locations).
 bash tools/dm-extract.sh integrity "<campaign-name>"
 
+# Seed threat clocks: detect the book's headline time pressure (e.g. a "collapse
+# in N days" countdown) in the plots and create real threat_clocks entries with a
+# full-clock consequence + linked plot, so the arc has live pressure (not just prose).
+bash tools/dm-extract.sh seed-clocks "<campaign-name>"
+
 # Archive the extracted/ folder (temporary working directory)
 bash tools/dm-extract.sh archive "<campaign-name>"
 ```

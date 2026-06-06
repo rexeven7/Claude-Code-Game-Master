@@ -48,3 +48,4 @@ Append-only, newest first. One line per board-level event. See `README.md`.
 - 2026-06-06T17:04Z  done: enhancer-relevance-gate — force-include name-bearing, drop below-floor, persist scores+name-match frac, flag zero-hit  [ss-7q3w9z]
 - 2026-06-06T17:08Z  done: missing-location-reconcile — stub/drop unresolved location refs; location-kind unresolved 176→0  [ss-7q3w9z]
 - 2026-06-06T17:10Z  done: campaign-overview-author — seed overview+campaign_rules, fix dangling rules_doc; import Step 6.6  [ss-7q3w9z]
+- 2026-06-06T17:14Z  done: threat-clock-seeding — detect time pressure in plots, seed real threat clocks (10-day collapse live)  [ss-7q3w9z]
