@@ -26,6 +26,8 @@ Commands:
                             Optional: specify campaign name (defaults to filename)
   normalize [campaign]      Copy extracted/*.json to campaign root, unwrapping
                             agent wrapper keys into the flat {name:...} runtime shape
+  cap [campaign] [limit]    Cap each type to top-N (default 30) by importance
+                            (mention-frequency + plot-reference/party boost)
   merge [campaign] [--cleanup]  Combine results from all extraction agents
                             --cleanup: Archive extracted/ folder after merge
   save [strategy] [campaign] Save extracted content to world state
@@ -442,6 +444,32 @@ PY
     echo "Normalized to flat format. Runtime tools can now read these files."
 }
 
+cap_extracted() {
+    # Cap each entity type in the campaign root to the top-N most important
+    # (mention-frequency + plot-reference/party boost). Run after normalize.
+    local campaign_name="$1"
+    local limit="${2:-30}"
+
+    if [ -z "$campaign_name" ]; then
+        campaign_name=$(cat "$WORLD_STATE_BASE/active-campaign.txt" 2>/dev/null)
+        if [ -z "$campaign_name" ]; then
+            echo "Error: No campaign specified and no active campaign found."
+            echo "Usage: dm-extract.sh cap <campaign-name> [limit]"
+            exit 1
+        fi
+    fi
+
+    CAMPAIGN_DIR="$CAMPAIGNS_DIR/$(echo "$campaign_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')"
+    if [ ! -d "$CAMPAIGN_DIR" ]; then
+        echo "Error: Campaign directory not found: $CAMPAIGN_DIR"
+        exit 1
+    fi
+
+    echo "Capping extracted entities to top-$limit per type: $campaign_name"
+    echo "================================="
+    $PYTHON_CMD "$LIB_DIR/extraction_cap.py" "$CAMPAIGN_DIR" --limit "$limit"
+}
+
 # Main command handling
 case "$1" in
     prepare)
@@ -450,6 +478,10 @@ case "$1" in
 
     normalize)
         normalize_extracted "$2"
+        ;;
+
+    cap)
+        cap_extracted "$2" "$3"
         ;;
 
     merge)

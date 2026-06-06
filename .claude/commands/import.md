@@ -249,6 +249,12 @@ After all agents complete:
 # giant entity named "npcs". `normalize` unwraps them. NEVER `cp` these files.
 bash tools/dm-extract.sh normalize "<campaign-name>"
 
+# Cap each type to the top-30 most important entities (mention-frequency +
+# plot-reference/party boost). We do NOT need every walk-on NPC or one-off
+# platform — just the playable core. Runs before enhancement so dropped
+# entities aren't enhanced. Reports dropped counts to the user.
+bash tools/dm-extract.sh cap "<campaign-name>" 30
+
 # Archive the extracted/ folder (temporary working directory)
 bash tools/dm-extract.sh archive "<campaign-name>"
 ```
