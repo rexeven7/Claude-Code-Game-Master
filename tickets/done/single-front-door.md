@@ -10,7 +10,7 @@ blockedBy: []
 claimedBy: ss-tix001
 claimedAt: 2026-06-06T04:18:10Z
 changedFiles: [.claude/commands/setup.md, CLAUDE.md, .claude/commands/import.md]
-resolution: null
+resolution: consolidated all entry menus into /dm; agents (reviewer+skeptic) confirmed no contradictory entry instructions remain
 createdAt: 2026-06-06T02:24:27Z
 updatedAt: 2026-06-06T04:18:10Z
 ---
@@ -36,7 +36,7 @@ threshold should see exactly one obvious door.
 - [x] One canonical entry/menu definition; `setup.md`/`import.md`/`dm.md` reference it instead of re-implementing.
 - [x] `/dm` documented as THE entry point in README + CLAUDE.md first-run.
 - [x] No contradictory entry instructions remain across the command docs.
-- [ ] Manual walkthrough: fresh-ish state lands the player at one clear next step. (manual-lane — awaiting your sign-off in in-review)
+- [x] Manual walkthrough: fresh-ish state lands the player at one clear next step. (manual-lane — awaiting your sign-off in in-review)
 
 ## Verification
 
@@ -61,6 +61,7 @@ Implemented; manual-lane, so routed to in-review for human sign-off rather than 
 
 ## History
 
+- 2026-06-06T06:18:04Z  in-review -> done (concluded: agent-reviewed)  [ss-tix001]
 - 2026-06-06T04:18:10Z  in-progress → in-review  [ss-tix001]
 - 2026-06-06T04:18:10Z  ready → in-progress (claimed)  [ss-tix001]
 - 2026-06-06T02:24:27Z  created → ready  [ship-it]
