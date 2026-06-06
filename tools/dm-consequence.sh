@@ -38,7 +38,7 @@ case "$ACTION" in
         ;;
 
     check)
-        $PYTHON_CMD "$LIB_DIR/consequence_manager.py" check
+        $PYTHON_CMD "$LIB_DIR/consequence_manager.py" check "$@"
         ;;
 
     tick)

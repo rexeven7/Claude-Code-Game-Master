@@ -348,13 +348,31 @@ def main():
     # List resolved
     subparsers.add_parser('list-resolved', help='List resolved consequences')
 
-    args = parser.parse_args()
+    from cli_output import wants_json, strip_json_flag, emit, emit_error
+    json_mode = wants_json()
+    args = parser.parse_args(strip_json_flag(sys.argv[1:]))
 
     if not args.action:
         parser.print_help()
         sys.exit(1)
 
     manager = ConsequenceManager()
+
+    if json_mode and args.action == 'add':
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()):  # keep stdout JSON-only
+            cid = manager.add_consequence(args.description, args.trigger,
+                                          trigger_type=args.trigger_type,
+                                          match=args.match, expiry=args.expiry)
+        if cid:
+            emit({"id": cid}, json_mode=True)
+        else:
+            sys.exit(emit_error("failed to add consequence", json_mode=True))
+        return
+    if json_mode and args.action == 'check':
+        emit({"pending": manager.check_pending()}, json_mode=True)
+        return
 
     if args.action == 'add':
         if not manager.add_consequence(args.description, args.trigger,
