@@ -458,23 +458,41 @@ class SessionManager(EntityManager):
         else:
             lines.append("(none)")
 
-        # --- Campaign Rules ---
+        # --- Your World's Rules (bespoke per-campaign systems; NEVER truncated) ---
+        # These rules ARE the magic that makes each book feel distinct. The DM is
+        # told to follow them exactly, so it must see them in full. Nested systems
+        # (loot boxes, audience reactions, interviews) are pretty-printed whole.
         rules = campaign.get('campaign_rules', {})
         if rules:
+            import json
             lines.append("")
-            lines.append("--- CAMPAIGN RULES ---")
+            lines.append("--- YOUR WORLD'S RULES (follow exactly) ---")
             if isinstance(rules, dict):
                 for key, val in rules.items():
-                    value_text = self._truncate(str(val), 220, full)
-                    lines.append(f"- {key}: {value_text}")
+                    if isinstance(val, (dict, list)):
+                        lines.append(f"- {key}:")
+                        for vline in json.dumps(val, indent=2, ensure_ascii=False).splitlines():
+                            lines.append(f"    {vline}")
+                    else:
+                        lines.append(f"- {key}: {val}")
             elif isinstance(rules, list):
-                max_rules = len(rules) if full else 12
-                for rule in rules[:max_rules]:
-                    lines.append(f"- {self._truncate(str(rule), 220, full)}")
-                if not full and len(rules) > max_rules:
-                    lines.append(f"- ... and {len(rules) - max_rules} more rules (use --full)")
+                for rule in rules:
+                    if isinstance(rule, (dict, list)):
+                        for vline in json.dumps(rule, indent=2, ensure_ascii=False).splitlines():
+                            lines.append(f"  {vline}")
+                    else:
+                        lines.append(f"- {rule}")
 
-        return "\n".join(lines)
+        context = "\n".join(lines)
+
+        # Token observability: soft ~2k-token target is GUIDANCE only, never a hard
+        # cut. Opt in with DM_DEBUG_CONTEXT=1 to watch the budget without altering output.
+        import os
+        if os.environ.get('DM_DEBUG_CONTEXT'):
+            approx_tokens = len(context) // 4
+            print(f"[context] ~{approx_tokens} tokens ({len(context)} chars)", file=sys.stderr)
+
+        return context
 
     # ==================== Private Helpers ====================
 
