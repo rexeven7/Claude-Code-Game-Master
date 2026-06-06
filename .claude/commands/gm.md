@@ -16,6 +16,23 @@ When user invokes `/gm <subcommand>`, route to the appropriate section:
 | overview | Jump to CAMPAIGN OVERVIEW section |
 | status | Run `bash tools/gm-overview.sh` and display results |
 | end | Jump to ENDING SESSION section |
+| choices [on\|off\|toggle] | Run `bash tools/gm-session.sh choices <arg>`, confirm the new play style, and continue the current scene in it |
+
+---
+
+## ACTION MENU (PLAY STYLE)
+
+The GM can end each beat with bracketed `[A]`-`[E]` action options, or with an
+open prompt and no menu. This is a per-campaign, player-togglable preference
+(`preferences.action_menu`, default ON) surfaced in `gm-session.sh context`.
+
+- Toggle explicitly: `bash tools/gm-session.sh choices on|off|toggle` (no arg shows state).
+- Toggle by asking mid-play ("stop giving me choices", "give me options again"):
+  detect the intent, run the command to persist it, then continue the scene in
+  the new style without re-narrating.
+
+When OFF, still resolve actions and prompt the player — just close with an open
+question instead of a numbered/lettered list.
 
 ---
 

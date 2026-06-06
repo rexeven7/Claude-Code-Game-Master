@@ -18,6 +18,11 @@ from entity_manager import EntityManager
 class SessionManager(EntityManager):
     """Manage D&D session operations. Inherits from EntityManager for common functionality."""
 
+    # Per-campaign play-style defaults. `action_menu` controls whether the GM ends
+    # each beat with bracketed [A]-[E] choices (on) or an open prompt (off). Stored
+    # under overview.preferences; surfaced in get_full_context so the GM honors it.
+    DEFAULT_PREFERENCES = {"action_menu": True}
+
     def __init__(self, world_state_dir: str = None):
         super().__init__(world_state_dir)
 
@@ -43,6 +48,28 @@ class SessionManager(EntityManager):
     def get_iso_timestamp(self) -> str:
         """Get ISO format timestamp for filenames"""
         return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
+    # ==================== Play-Style Preferences ====================
+
+    def get_preferences(self) -> Dict[str, Any]:
+        """Return play-style preferences, defaults merged with any saved overrides."""
+        campaign = self.json_ops.load_json(self.campaign_file) or {}
+        prefs = dict(self.DEFAULT_PREFERENCES)
+        saved = campaign.get("preferences")
+        if isinstance(saved, dict):
+            prefs.update(saved)
+        return prefs
+
+    def set_preference(self, key: str, value: Any) -> Dict[str, Any]:
+        """Persist a single play-style preference; returns the full merged prefs."""
+        campaign = self.json_ops.load_json(self.campaign_file) or {}
+        prefs = campaign.get("preferences")
+        if not isinstance(prefs, dict):
+            prefs = {}
+        prefs[key] = value
+        campaign["preferences"] = prefs
+        self.json_ops.save_json(self.campaign_file, campaign)
+        return self.get_preferences()
 
     # ==================== Session Lifecycle ====================
 
@@ -359,6 +386,15 @@ class SessionManager(EntityManager):
         lines.append("=== SESSION CONTEXT ===")
         lines.append(f"Campaign: {campaign_name} | Session #{session_num}")
         lines.append(f"Location: {location} | Time: {time_str}")
+
+        # --- Play style (honor every beat; player toggles anytime) ---
+        if self.get_preferences().get("action_menu", True):
+            lines.append("Play style: action menu ON — end each beat with 3-5 bracketed "
+                         "[A]-[E] options.")
+        else:
+            lines.append("Play style: action menu OFF — end beats with an open prompt; do "
+                         "NOT list bracketed [A]-[E] choices. The player drives freely. "
+                         "(Toggle: /gm choices on|off)")
 
         # --- Previously On (story spine: resume story-aware, not stat-amnesiac) ---
         # Bounded by item COUNT, never by chopping a single entry. --full shows all.
@@ -843,6 +879,11 @@ def main():
     context_parser = subparsers.add_parser('context', help='Get full session context (one-command startup)')
     context_parser.add_argument('--full', action='store_true', help='Show full context with less truncation')
 
+    choices_parser = subparsers.add_parser('choices', help='Toggle the action-menu play style')
+    choices_parser.add_argument('value', nargs='?', default='show',
+                                choices=['on', 'off', 'toggle', 'show'],
+                                help='on | off | toggle | show (default: show)')
+
     from cli_output import wants_json, strip_json_flag, emit
     json_mode = wants_json()
     args = parser.parse_args(strip_json_flag(sys.argv[1:]))
@@ -908,6 +949,20 @@ def main():
 
     elif args.action == 'context':
         print(manager.get_full_context(full=getattr(args, 'full', False)))
+
+    elif args.action == 'choices':
+        val = getattr(args, 'value', 'show')
+        current = manager.get_preferences().get('action_menu', True)
+        if val != 'show':
+            new = (not current) if val == 'toggle' else (val == 'on')
+            manager.set_preference('action_menu', new)
+            current = new
+        state = 'on' if current else 'off'
+        if val == 'show':
+            print(f"Action menu is {state}.")
+        else:
+            print(f"Action menu turned {state}. "
+                  f"{'Beats will end with [A]-[E] choices.' if current else 'Beats will end with an open prompt.'}")
 
 
 if __name__ == "__main__":

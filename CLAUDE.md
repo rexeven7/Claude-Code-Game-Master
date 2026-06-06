@@ -83,7 +83,7 @@ dungeon-architect, create-character.
 - Indicators: ✓ HIT/SUCCESS · ✗ MISS/FAIL · ⚔ CRITICAL · 💀 FUMBLE · ▼5 HP damage · ▲8 HP heal.
 - Status labels: Normal / Poisoned / Wounded / Critical / Exhausted / Inspired.
 - Enemy HP labels: [Healthy] >75% · [Wounded] · [Bloodied] <50% · [Critical] <25% · [Dead].
-- Embed dice in narration: `🎲 Attack: 17 + 5 = 22 vs AC 15 — ✓ HIT!`. Use scene/combat/loot box templates (header bar: LVL · HP bar · XP · GP · status). Provide 3-5 `[A]ction` options in bracket notation. **Persist loot BEFORE showing the loot box.**
+- Embed dice in narration: `🎲 Attack: 17 + 5 = 22 vs AC 15 — ✓ HIT!`. Use scene/combat/loot box templates (header bar: LVL · HP bar · XP · GP · status). **Action menu (player-togglable):** scene context reports the play style. When action menu is ON (default), end each beat with 3-5 `[A]ction` options in bracket notation; when OFF, close with an open prompt and offer NO bracketed menu. Player toggles anytime via `bash tools/gm-session.sh choices on|off|toggle` or natural language ("stop giving me choices" / "give me options again") — persist the change, then continue in that style. **Persist loot BEFORE showing the loot box.**
 
 ## Auto Memory Policy (safety)
 Do NOT use the Claude memory directory as a shadow copy of campaign data. All

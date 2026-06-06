@@ -22,6 +22,22 @@ def test_context_has_pending_consequences_section(dcc_world):
     assert "PENDING CONSEQUENCES" in _context(dcc_world)
 
 
+def test_action_menu_defaults_on_and_surfaces_in_context(dcc_world):
+    sm = SessionManager(dcc_world)
+    assert sm.get_preferences().get("action_menu") is True
+    assert "action menu ON" in sm.get_full_context()
+
+
+def test_action_menu_off_changes_play_style_line(dcc_world):
+    sm = SessionManager(dcc_world)
+    sm.set_preference("action_menu", False)
+    # Persisted and re-read by a fresh manager (proves it lives in the overview).
+    assert SessionManager(dcc_world).get_preferences().get("action_menu") is False
+    ctx = SessionManager(dcc_world).get_full_context()
+    assert "action menu OFF" in ctx
+    assert "action menu ON" not in ctx
+
+
 def test_pending_consequences_render_real_text_not_unknown(dcc_world):
     """Regression guard for the consequence-display bug.
 

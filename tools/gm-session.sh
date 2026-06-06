@@ -12,6 +12,7 @@ if [ "$#" -lt 1 ]; then
     echo "  status                   - Show current campaign status"
     echo "  move <location>          - Move party to new location"
     echo "  context                  - Full session context (character, party, consequences, rules)"
+    echo "  choices [on|off|toggle]  - Toggle the [A]-[E] action menu (no arg: show state)"
     echo ""
     echo "Save System (JSON snapshots):"
     echo "  save <name>              - Create named save point"
@@ -177,9 +178,13 @@ case "$ACTION" in
         $PYTHON_CMD "$LIB_DIR/session_manager.py" history
         ;;
 
+    choices)
+        $PYTHON_CMD "$LIB_DIR/session_manager.py" choices "$@"
+        ;;
+
     *)
         echo "Unknown action: $ACTION"
-        echo "Valid actions: start, end, status, move, context, save, restore, list-saves, delete-save, history"
+        echo "Valid actions: start, end, status, move, context, choices, save, restore, list-saves, delete-save, history"
         exit 1
         ;;
 esac
