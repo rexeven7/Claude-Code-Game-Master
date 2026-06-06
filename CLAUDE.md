@@ -63,13 +63,25 @@ CONTEXT → DECIDE → EXECUTE → PERSIST → NARRATE
 
 ## Action Router
 
-| Player Says | Workflow |
-|-------------|----------|
-| "I attack..." | → [Combat](#combat) |
-| "I talk to..." | → [Social/NPC](#social-npc-interaction) |
-| "I go to..." | → [Movement](#movement) |
-| "I try to..." | → [Skill Check](#skill-checks) |
-| "What do I see?" | → [Narration](#narration) |
+| Player Says | Workflow | Load skill (mechanics) |
+|-------------|----------|------------------------|
+| "I attack..." | → [Combat](#combat) | `dm-combat` |
+| "I cast..." | → Spellcasting | `dm-spellcasting` |
+| "I talk to..." | → [Social/NPC](#social-npc-interaction) | — |
+| "I go to..." (cave/ruin) | → [Movement](#movement) | `dm-dungeon` |
+| "I try to..." | → [Skill Check](#skill-checks) | — |
+| LEVEL_UP | → [Level Up](#level-up) | `dm-levelup` |
+| Apply a condition | → Conditions | `dm-conditions` |
+
+### Mechanics Skills (on-demand)
+
+The heavy D&D lookup tables now live in on-demand Skills under `.claude/skills/`,
+loaded only when the matching action fires (so the always-on context stays lean):
+`dm-combat` (XP-by-CR, modifiers, death saves), `dm-spellcasting` (spell slots,
+concentration), `dm-conditions` (status + exhaustion), `dm-levelup` (XP
+thresholds, ceremony, hit dice), `dm-dungeon` (exploration modes, map symbols).
+These are the **dnd5e World Kit's** mechanics; a non-D&D kit ships its own. The
+inline sections below remain as a fallback until the lean-core refactor completes.
 
 ---
 
