@@ -19,3 +19,4 @@ Append-only, newest first. One line per board-level event. See `README.md`.
 - 2026-06-06T04:49Z  done: json-wrappers-session — --json envelope for status/context/move  [ss-tix001]
 - 2026-06-06T04:50Z  done: json-wrappers-consequence — --json envelope for check/add  [ss-tix001]
 - 2026-06-06T04:52Z  done: json-wrappers-player — --json envelope for get/hp  [ss-tix001]
+- 2026-06-06T04:54Z  done: json-wrappers-npc — --json envelope for status/voice/update  [ss-tix001]

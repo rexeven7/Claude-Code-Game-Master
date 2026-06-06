@@ -93,11 +93,11 @@ case "$ACTION" in
             echo "Usage: dm-npc.sh update <name> <event>"
             exit 1
         fi
-        $PYTHON_CMD "$LIB_DIR/npc_manager.py" update "$NAME" "$1"
+        $PYTHON_CMD "$LIB_DIR/npc_manager.py" update "$NAME" "$@"
         ;;
 
     status)
-        STATUS_OUTPUT=$($PYTHON_CMD "$LIB_DIR/npc_manager.py" status "$NAME")
+        STATUS_OUTPUT=$($PYTHON_CMD "$LIB_DIR/npc_manager.py" status "$NAME" "$@")
         STATUS_CODE=$?
         echo "$STATUS_OUTPUT"
 
@@ -246,7 +246,7 @@ case "$ACTION" in
         ;;
 
     voice)
-        $PYTHON_CMD "$LIB_DIR/npc_manager.py" voice "$NAME"
+        $PYTHON_CMD "$LIB_DIR/npc_manager.py" voice "$NAME" "$@"
         ;;
 
     *)

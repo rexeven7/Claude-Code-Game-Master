@@ -856,13 +856,40 @@ def main():
     feature_parser.add_argument('sub_action', choices=['add', 'remove'], help='Add or remove')
     feature_parser.add_argument('feature', help='Feature name')
 
-    args = parser.parse_args()
+    from cli_output import wants_json, strip_json_flag, emit, emit_error
+    json_mode = wants_json()
+    args = parser.parse_args(strip_json_flag(sys.argv[1:]))
 
     if not args.action:
         parser.print_help()
         sys.exit(1)
 
     manager = NPCManager()
+
+    if json_mode and args.action == 'status':
+        npc = manager.get_npc_status(args.name)
+        if npc is not None:
+            emit(npc, json_mode=True)
+        else:
+            sys.exit(emit_error("NPC not found", json_mode=True))
+        return
+    if json_mode and args.action == 'voice':
+        voice = manager.get_voice(args.name)
+        if voice is not None:
+            emit({"voice": voice}, json_mode=True)
+        else:
+            sys.exit(emit_error("NPC not found", json_mode=True))
+        return
+    if json_mode and args.action == 'update':
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()):
+            ok = manager.update_npc(args.name, args.event)
+        if ok:
+            emit({"updated": args.name}, json_mode=True)
+        else:
+            sys.exit(emit_error("NPC update failed", json_mode=True))
+        return
 
     if args.action == 'create':
         if not manager.create_npc(args.name, args.description, args.attitude):
