@@ -396,6 +396,22 @@ class SessionManager(EntityManager):
                          "NOT list bracketed [A]-[E] choices. The player drives freely. "
                          "(Toggle: /gm choices on|off)")
 
+        # --- Narrative Voice (write the prose in the world's authorial voice) ---
+        bible = self.json_ops.load_json("world-bible.json") or {}
+        voice = bible.get("voice") or {}
+        style = (voice.get("style") or "").strip()
+        passages = [str(p).strip() for p in (voice.get("sample_passages") or []) if str(p).strip()]
+        vocab = [str(v).strip() for v in (voice.get("vocab") or []) if str(v).strip()]
+        if style or passages:
+            lines.append("")
+            lines.append("--- NARRATIVE VOICE (narrate in this voice; a prose target, NOT lore) ---")
+            if style:
+                lines.append(f"Style: {style}")
+            if vocab:
+                lines.append("In-world terms to favor: " + ", ".join(vocab[:8]))
+            for p in passages[:3]:
+                lines.append(f"  | {p}")
+
         # --- Previously On (story spine: resume story-aware, not stat-amnesiac) ---
         # Bounded by item COUNT, never by chopping a single entry. --full shows all.
         summaries = self._recent_session_summaries(n=None if full else 3)
