@@ -18,6 +18,7 @@ if [ "$#" -lt 1 ]; then
     echo "  create <name> <description> <attitude>  Create new NPC"
     echo "  update <name> <event>                   Add event to NPC history"
     echo "  status <name>                           Show NPC details"
+    echo "  voice <name>                            Show NPC canonical voice lines"
     echo "  enhance <name> <description>            Update NPC description"
     echo "  list [--attitude X] [--location Y]      List all NPCs"
     echo ""
@@ -242,6 +243,10 @@ case "$ACTION" in
             exit 1
         fi
         $PYTHON_CMD "$LIB_DIR/npc_manager.py" feature "$NAME" "$1" "$2"
+        ;;
+
+    voice)
+        $PYTHON_CMD "$LIB_DIR/npc_manager.py" voice "$NAME"
         ;;
 
     *)

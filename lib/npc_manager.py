@@ -260,6 +260,22 @@ class NPCManager(EntityManager):
             return tags
         return None
 
+    def get_voice(self, name: str) -> Optional[List[str]]:
+        """Return an NPC's canonical voice lines (verbatim source dialogue).
+
+        Returns None if the NPC does not exist, [] if it has no voice yet.
+        Read-only: never mutates the stored `context` field.
+        """
+        npc = self.get_npc_status(name)
+        if npc is None:
+            return None
+        context = npc.get('context', [])
+        if isinstance(context, list):
+            return [str(line) for line in context if line]
+        if isinstance(context, str) and context.strip():
+            return [context.strip()]
+        return []
+
     def _manage_tags(self, name: str, tag_type: str, tags: tuple, action: str) -> bool:
         """
         Internal method to manage tags
@@ -790,6 +806,10 @@ def main():
     tags_parser = subparsers.add_parser('tags', help='Get NPC tags')
     tags_parser.add_argument('name', help='NPC name')
 
+    # Voice (canonical dialogue lines)
+    voice_parser = subparsers.add_parser('voice', help='Get NPC canonical voice lines')
+    voice_parser.add_argument('name', help='NPC name')
+
     # List NPCs
     list_parser = subparsers.add_parser('list', help='List NPCs')
     list_parser.add_argument('--attitude', help='Filter by attitude')
@@ -886,6 +906,13 @@ def main():
             print(json.dumps(tags, indent=2))
         else:
             sys.exit(1)
+
+    elif args.action == 'voice':
+        voice = manager.get_voice(args.name)
+        if voice is None:
+            sys.exit(1)
+        import json
+        print(json.dumps(voice, indent=2))
 
     elif args.action == 'list':
         npcs = manager.list_npcs(args.attitude, args.location, args.quest)

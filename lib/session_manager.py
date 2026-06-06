@@ -452,7 +452,18 @@ class SessionManager(EntityManager):
             lines.append("(none)")
             lines.append("")
 
+        # --- NPC Voices (canonical lines for present NPCs; surface, never mutate) ---
+        npc_voices = self._present_npc_voices(npcs, location, full=full)
+        if npc_voices:
+            lines.append("")
+            lines.append("--- NPC VOICES (present NPCs, speak in their own words) ---")
+            for npc_name, vlines in npc_voices:
+                lines.append(f"{npc_name}:")
+                for vl in vlines:
+                    lines.append(f'  "{vl}"')
+
         # --- Pending Consequences ---
+        lines.append("")
         lines.append("--- PENDING CONSEQUENCES ---")
         consequences = self.json_ops.load_json("consequences.json") or {}
         pending = []
@@ -600,6 +611,33 @@ class SessionManager(EntityManager):
                 txt = it.get('fact', it.get('text', it.get('event', ''))) if isinstance(it, dict) else str(it)
                 if txt:
                     out.append(txt)
+        return out
+
+    def _present_npc_voices(self, npcs, location, full=False):
+        """Canonical voice lines for NPCs present in the scene.
+
+        Present = party members OR NPCs tagged to the current location. Returns
+        [(name, [lines])]; up to 2 lines each unless full. Read-only — never
+        touches the stored `context` field (PROTECT canonical-voice extraction).
+        """
+        if not isinstance(npcs, dict):
+            return []
+        loc_l = (location or '').lower()
+        out = []
+        for name, d in npcs.items():
+            if not isinstance(d, dict):
+                continue
+            tags = d.get('tags', {})
+            locs = [str(x).lower() for x in tags.get('locations', [])] if isinstance(tags, dict) else []
+            present = bool(d.get('is_party_member')) or (bool(loc_l) and loc_l in locs)
+            if not present:
+                continue
+            ctx = d.get('context', [])
+            vlines = ctx if isinstance(ctx, list) else ([ctx] if ctx else [])
+            vlines = [str(x) for x in vlines if x]
+            if not vlines:
+                continue
+            out.append((name, vlines if full else vlines[:2]))
         return out
 
     def _count_items(self, filename: str) -> int:
