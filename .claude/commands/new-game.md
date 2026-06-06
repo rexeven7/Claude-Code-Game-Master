@@ -27,6 +27,14 @@ Run the questionnaire with **AskUserQuestion**. Ask for: a one-line **premise**
 **setting type** (reuse the classic options). Then ALWAYS ask the **genre bend** —
 the single most important anti-generic lever:
 
+Also ask the **voice** question — *"Whose voice should this world be narrated in?"*
+— with genre-adaptive suggestions + free text (e.g. sword-and-sorcery → Robert E.
+Howard; high fantasy → Tolkien / Le Guin; sci-fantasy → Gibson; whimsical →
+Pratchett). Store as `voice_exemplar`. This is what makes narration read like a
+real author instead of a generic narrator.
+
+Genre bend options:
+
 - *Sword-and-sorcery (Conan):* magic = blood/curse-priced and villainous; bronze-age
   tech; decadent kingdoms vs. barbarian frontier.
 - *High fantasy (Tolkien):* deep lineage/ancestry; a pantheon + old songs; pastoral
@@ -49,6 +57,7 @@ Write `world-seed.json` to the campaign dir:
 {
   "premise": "...", "tone": "...", "magic": "...", "setting": "...",
   "genre_bend": "<the distinct commitments, in a sentence or two>",
+  "voice_exemplar": "<author/work to channel, e.g. 'Robert E. Howard'>",
   "axes": [ { "axis": "geography", "depth": "deep", "bend": "..." },
             { "axis": "magic-lore", "depth": "deep", "bend": "blood-priced curses" },
             { "axis": "bestiary", "depth": "stub", "bend": "..." } ]
@@ -66,6 +75,18 @@ author will carry — get the world's identity right here.
 Write `world-bible.json` to the campaign dir with `confirmed: false` and ALL
 required keys (validated by `lib/world_bible.py`): `name`, `voice`
 (`style`/`vocab`/`sample_passages`), `tone`, `themes`, `factions`
+
+**Author the `voice` block from `voice_exemplar`** — this is how the GM narrates
+in the author's voice at play (surfaced every beat by `get_full_context`):
+- `style`: a concrete prose fingerprint imitating the exemplar (sentence rhythm,
+  diction, imagery) — not "epic fantasy" but e.g. "Howard's terse, muscular cadence;
+  sensory violence; archaic but plain diction."
+- `sample_passages`: 2-3 SHORT passages YOU write *in that author's voice* (original
+  imitation, NOT copied from the real author's text) so the GM has a concrete target.
+- `vocab`: a few signature in-world terms.
+The `culture` axis (Phase C) may deepen `vocab` + add passages.
+
+Other required keys: `factions`
 (`{nodes:[],edges:[]}` — seed the major ones), `geography` (`{nodes,edges}` — the
 starting region + a few named places beyond the village), `signature_systems` (the
 distinctive magic/tech, named), and a short `timeline`. Make it specific and

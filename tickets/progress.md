@@ -1,6 +1,7 @@
 # Progress Log
 
 Append-only, newest first. One line per board-level event. See `README.md`.
+- 2026-06-06T20:33Z  done: voice-seed-author — /new-game captures voice_exemplar + authors bible voice  [ss-w7k2m9]
 - 2026-06-06T20:32Z  done: voice-context-surfacing — NARRATIVE VOICE block surfaced in get_full_context  [ss-w7k2m9]
 - 2026-06-06T20:29Z  sliced: narrative-voice-fidelity → 4 tickets in ready/ (voice-context-surfacing claimable; gm-craft-voice gated)  [ship-it]
 - 2026-06-06T20:29Z  prd: narrative-voice-fidelity created  [ship-it]
