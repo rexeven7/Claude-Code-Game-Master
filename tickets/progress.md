@@ -25,3 +25,4 @@ Append-only, newest first. One line per board-level event. See `README.md`.
 - 2026-06-06T05:02Z  done: open-character-schema — migration + kit-aware validation + kit-driven XP  [ss-tix001]
 - 2026-06-06T05:05Z  done: npc-innerlife-schema — goal/secret/mood/voice/bonds additive + surfaced  [ss-tix001]
 - 2026-06-06T05:08Z  done: combat-state-persistence — combat_state.json + dm-combat.sh (resumable, optional)  [ss-tix001]
+- 2026-06-06T05:09Z  done: world-bible-schema — world-bible.json spine (voice/factions/geography/systems)  [ss-tix001]

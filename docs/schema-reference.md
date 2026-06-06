@@ -375,3 +375,24 @@ how a world plays without baking in D&D 5e.
 - `progression.model` selects one of the core's three models; its config
   (`thresholds` for xp-levels, `resource`+`tiers` for resource-axis) is supplied here.
 - World-flavor systems (loot boxes, viewers) stay in campaign-overview `campaign_rules`.
+
+## world-bible.json (Book Bible)
+
+The structured fidelity spine of a world, loaded at session start. Auto-drafted at
+import; captures what makes a book feel like itself.
+
+```json
+{
+  "name": "string",
+  "voice": { "style": "string", "vocab": ["..."], "sample_passages": ["..."] },
+  "tone": "string",
+  "themes": ["..."],
+  "factions":  { "nodes": [{"id","name"}], "edges": [{"from","to","relation"}] },
+  "geography": { "nodes": [{"id","name"}], "edges": [{"from","to","adjacency"}] },
+  "timeline": ["..."],
+  "signature_systems": ["..."]
+}
+```
+
+Required: name, voice, tone, themes, factions (graph), geography (graph),
+signature_systems. The bible auto-generates the World Kit ruleset + campaign_rules.
