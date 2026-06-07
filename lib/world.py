@@ -19,6 +19,7 @@ from plot_manager import PlotManager
 from session_manager import SessionManager
 from consequence_manager import ConsequenceManager
 from player_manager import PlayerManager
+from character_schema import to_flat
 
 
 class World:
@@ -146,10 +147,10 @@ class World:
 
     @property
     def character(self) -> Optional[Dict[str, Any]]:
-        """Get the player character data."""
+        """Get the player character data (canonical flat shape)."""
         char_file = self.campaign_dir / "character.json"
         if char_file.exists():
-            return self.json_ops.load_json("character.json")
+            return to_flat(self.json_ops.load_json("character.json"))
         return None
 
     def get_overview(self) -> Dict[str, Any]:

@@ -6,6 +6,8 @@ Provides schema definitions and validation functions for all entity types.
 
 from typing import Dict, Any, List, Tuple, Optional
 
+from character_schema import to_flat
+
 # Valid attitudes for NPCs
 VALID_ATTITUDES = {'ally', 'neutral', 'enemy', 'friendly', 'hostile', 'suspicious', 'helpful'}
 
@@ -250,6 +252,9 @@ def validate_character(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
         Tuple of (is_valid, list of error messages)
     """
     errors = []
+
+    # Accept either shape: normalize legacy open-schema to canonical flat first.
+    data = to_flat(data)
 
     # Required fields
     required = ['name', 'race', 'class', 'level']

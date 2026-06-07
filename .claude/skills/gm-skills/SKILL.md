@@ -30,8 +30,10 @@ A failed roll NEVER means "nothing happens" — it means "something DIFFERENT ha
 - Failed stealth? Not caught yet, but you knocked something over — now you're on a timer.
 Framework: (1) what did they try? (2) what was the intent? (3) what goes sideways into a NEW situation? (4) what choice does that create?
 
+**Fail-forward ≠ immortal.** "Something different happens" can include death when the stakes were lethal and telegraphed (over-matched threat, ignored warning, a tightening string of failures). Don't soften a self-inflicted lethal outcome into a free pass. On PC death → Death Protocol (CLAUDE.md).
+
 ## Failure consequences (by margin below DC)
-- Physical: 1-2 minor setback · 3-5 resource spent/attention drawn · 6-9 minor harm (1d4) · 10+ real harm (1d6+).
+- Physical: 1-2 minor setback · 3-5 resource spent/attention drawn · 6-9 minor harm (1d4) · 10+ real harm (1d6+). For lethal/telegraphed stakes, a catastrophic margin can mean a death-gate hit (drop to 0 → dying), not just 1d6+. Reserve this for earned, signposted danger.
 - Social: 1-2 unconvinced · 3-5 attitude shifts negative · 6-9 acts against you · 10+ hostile/spreads word.
 - Information: 1-2 partial · 3-5 nothing, try another way · 6-9 wrong conclusion believed true · 10+ triggers a ward/wastes time.
 

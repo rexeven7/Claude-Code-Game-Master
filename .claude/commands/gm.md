@@ -22,9 +22,11 @@ When user invokes `/gm <subcommand>`, route to the appropriate section:
 
 ## ACTION MENU (PLAY STYLE)
 
-The GM can end each beat with bracketed `[A]`-`[E]` action options, or with an
-open prompt and no menu. This is a per-campaign, player-togglable preference
-(`preferences.action_menu`, default ON) surfaced in `gm-session.sh context`.
+The GM can end each beat with exactly 3 numbered (`1.` `2.` `3.`) action options,
+or with an open prompt and no menu. This is a per-campaign, player-togglable
+preference (`preferences.action_menu`, default ON) surfaced in `gm-session.sh
+context`. Match prose length to the beat — most beats stay tight, but let big
+moments run longer when they earn it; be pacing-aware, one beat at a time.
 
 - Toggle explicitly: `bash tools/gm-session.sh choices on|off|toggle` (no arg shows state).
 - Toggle by asking mid-play ("stop giving me choices", "give me options again"):
@@ -32,7 +34,7 @@ open prompt and no menu. This is a per-campaign, player-togglable preference
   the new style without re-narrating.
 
 When OFF, still resolve actions and prompt the player — just close with an open
-question instead of a numbered/lettered list.
+question instead of a numbered list.
 
 ---
 
@@ -290,6 +292,29 @@ Display:
   /gm save · /gm character · /help
 ================================================================
 ```
+
+---
+
+## CHARACTER DEATH (mid-session hand-off)
+
+PC death is **NOT** the end-session path above. Death does not close the game — it routes to the **Death Protocol** in CLAUDE.md and play continues with a new active PC.
+
+When the PC dies (see Stakes & Death / 0-HP rules in CLAUDE.md):
+
+1. **Persist first** — `bash tools/gm-player.sh kill "<name>" --cause "<how>"` (sets status dead, HP 0, stamps died_at), log it as a fact (`gm-note.sh`), record any triggered consequence (`gm-consequence.sh add`).
+2. **Narrate the death** with weight. No menu yet.
+3. **Offer the hand-off** (the show goes on — not GAME OVER). Present exactly:
+   ```
+   1. Take over a PARTY MEMBER — continue as someone already in the scene.
+   2. Roll a NEW character — a fresh arrival enters the story.
+   3. Step in as a CANON figure from the source — an established character takes the lead.
+   ```
+   (If solo with no party and no fitting canon figure, offer 2 and 3 only.)
+4. **SWAP in the new PC:**
+   - Party member → `bash tools/gm-player.sh become "<name>"` (copies their party sheet into character.json, archives the fallen PC to `fallen/`).
+   - New character → spawn `create-character`, `gm-player.sh save-json '<json>'`, then `gm-player.sh set "<name>"`.
+   - Canon figure → onboarding canon path → flesh out via `create-character` if thin → save to character.json → `gm-player.sh set "<name>"`.
+5. **Bridge the fiction** (how/why control passes), update location/scene, then resume play. The dead hero stays in the world's memory — referenced, mourned, looted, avenged. Threads and clocks persist.
 
 ---
 

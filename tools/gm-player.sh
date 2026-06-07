@@ -78,6 +78,27 @@ case "$ACTION" in
         $PYTHON_CMD "$LIB_DIR/player_manager.py" get "$NAME" "$@"
         ;;
 
+    "kill")
+        if [ -z "$1" ]; then
+            echo "Usage: gm-player.sh kill <character_name> [--cause \"<how>\"]"
+            echo "Example: gm-player.sh kill Tandy --cause \"crushed by the Iron Tangle\""
+            exit 1
+        fi
+        NAME="$1"; shift
+        $PYTHON_CMD "$LIB_DIR/player_manager.py" kill "$NAME" "$@"
+        ;;
+
+    "become")
+        if [ -z "$1" ]; then
+            echo "Usage: gm-player.sh become <party_member_name>"
+            echo "Take over a party member as the active PC (Death Protocol hand-off)."
+            echo "Archives the fallen PC to the campaign's fallen/ dir."
+            exit 1
+        fi
+        NAME="$1"; shift
+        $PYTHON_CMD "$LIB_DIR/player_manager.py" become "$NAME" "$@"
+        ;;
+
     "gold")
         if [ -z "$1" ]; then
             echo "Usage: gm-player.sh gold <character_name> [+/-amount]"
@@ -167,6 +188,8 @@ case "$ACTION" in
         echo "  set <name>                   - Set character as current active PC"
         echo "  xp <name> +<amount>          - Award XP to character"
         echo "  hp <name> <+/-amount>        - Modify character HP"
+        echo "  kill <name> [--cause ...]    - Mark PC dead (then run Death Protocol)"
+        echo "  become <party_member>        - Take over a party member as the active PC"
         echo "  gold <name> [+/-amount]      - Modify or show character gold"
         echo "  inventory <name> <action>    - Manage inventory (add/remove/list)"
         echo "  condition <name> <action>    - Manage conditions (add/remove/list)"

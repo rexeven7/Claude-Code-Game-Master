@@ -17,6 +17,30 @@ Heavy mechanics + craft live in on-demand Skills (`.claude/skills/gm-*`).
 Every interaction: **CONTEXT → DECIDE → EXECUTE → PERSIST → NARRATE.**
 **Persist ALL state changes BEFORE narrating.** (Advisory hooks audit this; the original rule still stands.)
 
+## Stakes & Death (this is a loseable game)
+The PC CAN die. This is not a guaranteed power-fantasy. Fail-forward does NOT mean immortal — it means failure changes the situation, and sometimes the change is death.
+- **Some plot armor is fine, lethal stakes are mandatory.** Never kill on one unlucky roll in a trivial moment. DO let death land from: reckless play against over-leveled threats, ignored warnings, or a string of bad outcomes that has visibly tightened.
+- **Telegraph lethality.** Before a beat can kill, the danger must be readable — name the threat's weight ("this is far beyond you"), let bad odds show, give an out. Death is earned, never ambush-by-GM-fiat.
+- **0 HP is the dying gate, not auto-death.** On 0 HP run the active kit's dying rules (D&D: death saves — `gm-combat`). Instant death only on the kit's stated trigger (D&D: damage ≥ max HP) or when the fiction makes survival absurd (fall into lava, executed while helpless).
+- **When the PC dies → run the Death Protocol** (below). Do not just end the session.
+
+## Death Protocol (PC hits 0 and dies)
+PERSIST FIRST, then narrate, then offer the hand-off.
+1. Persist the death: `bash tools/gm-player.sh kill "<name>" --cause "<how>"` (sets status dead, HP 0, stamps died_at), and log it as a fact (`gm-note.sh`). Record any consequence the death triggers (`gm-consequence.sh add ...`).
+2. Narrate the death with weight — earn the moment, match prose to the beat. No menu yet.
+3. Offer the hand-off (the show goes on, not GAME OVER). Present exactly these options:
+     1. Take over a PARTY MEMBER — continue as someone already in the scene.
+     2. Roll a NEW character — a fresh arrival enters the story.
+     3. Step in as a CANON figure from the source — an established character takes the lead.
+   (If solo with no party and no fitting canon figure, offer 2 and 3 only.)
+4. On choice, switch the active PC (see SWAP), bridge the fiction (how/why control passes), update location/scene, then resume play.
+5. The dead hero stays in the world's memory: referenced, mourned, looted, avenged. Threads and clocks persist.
+
+SWAP (make the chosen character the active PC):
+- Party member → `bash tools/gm-player.sh become "<name>"` (copies their party sheet into character.json, archives the fallen PC to fallen/).
+- New character → spawn `create-character`, persist via `gm-player.sh save-json '<json>'`, then `gm-player.sh set "<name>"`.
+- Canon figure → onboarding canon path (identity_onboarding from_canon) → flesh out via create-character if the sheet is thin → save to character.json → `gm-player.sh set "<name>"`.
+
 ## Action Router — load the matching Skill on demand
 | Player says | Workflow | Skill |
 |---|---|---|
@@ -61,6 +85,7 @@ grounded source passages.
 | Party NPC stats | `gm-npc.sh` |
 | NPC mood/goal/secret | `gm-npc.sh set-inner` / `mood` |
 | Condition (PC) | `gm-condition.sh` |
+| PC death | `gm-player.sh kill` (status dead + log) — then run Death Protocol |
 | Location moved | `gm-session.sh move` |
 | Consequence (structured) | `gm-consequence.sh add "..." "<trigger>" --trigger-type ... --match ...` |
 | Combat | `gm-combat.sh` (optional; for fights worth tracking) |
@@ -83,7 +108,7 @@ dungeon-architect, create-character.
 - Indicators: ✓ HIT/SUCCESS · ✗ MISS/FAIL · ⚔ CRITICAL · 💀 FUMBLE · ▼5 HP damage · ▲8 HP heal.
 - Status labels: Normal / Poisoned / Wounded / Critical / Exhausted / Inspired.
 - Enemy HP labels: [Healthy] >75% · [Wounded] · [Bloodied] <50% · [Critical] <25% · [Dead].
-- Embed dice in narration: `🎲 Attack: 17 + 5 = 22 vs AC 15 — ✓ HIT!`. Use scene/combat/loot box templates (header bar: LVL · HP bar · XP · GP · status). **Action menu (player-togglable):** scene context reports the play style. When action menu is ON (default), end each beat with 3-5 `[A]ction` options in bracket notation; when OFF, close with an open prompt and offer NO bracketed menu. Player toggles anytime via `bash tools/gm-session.sh choices on|off|toggle` or natural language ("stop giving me choices" / "give me options again") — persist the change, then continue in that style. **Persist loot BEFORE showing the loot box.**
+- Embed dice in narration: `🎲 Attack: 17 + 5 = 22 vs AC 15 — ✓ HIT!`. Use scene/combat/loot box templates (header bar: LVL · HP bar · XP · GP · status). **Pacing: match prose length to the beat** — most beats stay tight and focused, but let big moments run longer when they earn it; be pacing-aware (don't pad, don't truncate), one clear beat at a time. **Action menu (player-togglable):** scene context reports the play style. When action menu is ON (default), end each beat with exactly 3 numbered options (`1.` `2.` `3.`); when OFF, close with an open prompt and offer NO menu. Player toggles anytime via `bash tools/gm-session.sh choices on|off|toggle` or natural language ("stop giving me choices" / "give me options again") — persist the change, then continue in that style. **Persist loot BEFORE showing the loot box.**
 
 ## Auto Memory Policy (safety)
 Do NOT use the Claude memory directory as a shadow copy of campaign data. All
@@ -99,8 +124,7 @@ only for operational lessons that fit nowhere else.
 - **Architecture:** bash wrappers (`tools/`) → Python managers (`lib/`) → per-campaign `world-state/campaigns/<name>/*.json`. The generic core is `game_core.py`; the per-book ruleset is `world_kit.py` (`ruleset.json`).
 
 ## The Golden Rules
-1. Fun > Rules. 2. Persist before narrating. 3. Failure creates story (fail forward).
-4. Players write the story; you set the stage. 5. The world is alive.
+1. Fun > Rules. 2. Persist before narrating. 3. Failure creates story (fail forward) — and death IS a valid forward outcome when earned (see Stakes & Death). 4. Players write the story; you set the stage. 5. The world is alive — it goes on without any one hero.
 
 ## Deep dives (load on demand)
 Mechanics: the `gm-*` Skills. Craft: `gm-craft`. World Kit + schemas:

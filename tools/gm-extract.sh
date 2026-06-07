@@ -435,9 +435,9 @@ normalize_extracted() {
             items) key="items" ;;
             plots) key="plot_hooks" ;;
         esac
-        $PYTHON_CMD - "$CAMPAIGN_DIR/extracted/${type}.json" "$CAMPAIGN_DIR/${type}.json" "$key" "$type" <<'PY'
+        $PYTHON_CMD - "$CAMPAIGN_DIR/extracted/${type}.json" "$CAMPAIGN_DIR/${type}.json" "$key" "$type" "$LIB_DIR" <<'PY'
 import json, sys
-src, dst, key, type_name = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+src, dst, key, type_name, lib_dir = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
 try:
     d = json.load(open(src))
 except FileNotFoundError:
@@ -448,6 +448,14 @@ flat = d.get(key, d) if isinstance(d, dict) else d
 if not isinstance(flat, dict):
     print(f"  {type_name}: unexpected shape, copied verbatim")
     flat = d
+# Coerce bare-string location connections to {"to": name} dicts so the runtime
+# (move, integrity) never sees a string where it indexes conn["to"].
+if type_name == "locations" and isinstance(flat, dict):
+    sys.path.insert(0, lib_dir)
+    from connection_normalize import coerce_connections
+    n = coerce_connections(flat)
+    if n:
+        print(f"  {type_name}: coerced {n} string connection(s) to dict shape")
 json.dump(flat, open(dst, "w"), indent=2)
 print(f"  {type_name}: {len(flat)} entities -> {type_name}.json (flat)")
 PY

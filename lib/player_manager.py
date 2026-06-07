@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from entity_manager import EntityManager
+from character_schema import to_flat, is_open_schema
 
 
 class PlayerManager(EntityManager):
@@ -84,10 +85,11 @@ class PlayerManager(EntityManager):
         if self._is_using_single_character():
             try:
                 with open(self.character_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    raw = json.load(f)
             except (json.JSONDecodeError, IOError) as e:
                 print(f"[ERROR] Failed to load character: {e}")
                 return None
+            return self._normalize_loaded(raw, "character.json")
 
         # Legacy format: need name to find file
         if not name:
@@ -102,13 +104,25 @@ class PlayerManager(EntityManager):
             return None
         try:
             with open(char_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                raw = json.load(f)
         except (json.JSONDecodeError, IOError) as e:
             print(f"[ERROR] Failed to load character: {e}")
             return None
+        return self._normalize_loaded(raw, str(char_path))
+
+    def _normalize_loaded(self, raw: Dict, save_path: str) -> Dict:
+        """Return the character in canonical FLAT shape, migrating any legacy
+        open-schema file on disk to flat the first time it is read."""
+        if is_open_schema(raw):
+            flat = to_flat(raw)
+            self.json_ops.save_json(save_path, flat)
+            return flat
+        return raw
 
     def _save_character(self, name: str, data: Dict) -> bool:
         """Save character data to file using atomic writes via json_ops"""
+        # Persist in canonical flat shape (no-op if already flat).
+        data = to_flat(data)
         # New format: single character.json
         if self._is_using_single_character():
             return self.json_ops.save_json("character.json", data)
@@ -182,6 +196,9 @@ class PlayerManager(EntityManager):
         hp = char.get('hp', {})
         gold = char.get('gold', 0)
         summary = f"{char.get('name', name)} - {char.get('race', '?')} {char.get('class', '?')} Level {char.get('level', 1)} (HP: {hp.get('current', 0)}/{hp.get('max', 0)}, Gold: {gold})"
+        status = char.get('status')
+        if status in ('dying', 'dead'):
+            summary += f" | {status.upper()}"
         conditions = char.get('conditions', [])
         if conditions:
             summary += f" | Conditions: {', '.join(conditions)}"
@@ -345,6 +362,15 @@ class PlayerManager(EntityManager):
         new_hp = max(0, min(current_hp + amount, max_hp))
         char['hp']['current'] = new_hp
 
+        # Track the dying gate. 0 HP -> dying (unless already dead). Healing off
+        # 0 -> alive. A 'dead' status is sticky (only kill_character sets it; only
+        # an explicit revive would clear it), so it is never silently overwritten.
+        if char.get('status') != 'dead':
+            if new_hp == 0:
+                char['status'] = 'dying'
+            elif new_hp > 0 and char.get('status') == 'dying':
+                char['status'] = 'alive'
+
         # Save character
         if not self._save_character(name, char):
             return {'success': False}
@@ -371,7 +397,126 @@ class PlayerManager(EntityManager):
             'current_hp': new_hp,
             'max_hp': max_hp,
             'unconscious': new_hp == 0,
-            'bloodied': 0 < new_hp <= max_hp // 4
+            'bloodied': 0 < new_hp <= max_hp // 4,
+            'status': char.get('status', 'alive'),
+        }
+
+    def kill_character(self, name: str, cause: Optional[str] = None) -> Dict[str, Any]:
+        """Mark a character as dead: HP 0, status 'dead', stamp died_at + cause.
+
+        Persists the death state. The Death Protocol (CLAUDE.md) handles the
+        hand-off; this just records the fact on the sheet.
+        """
+        char = self._load_character(name)
+        if not char:
+            print(f"[ERROR] Character '{name}' not found")
+            return {'success': False}
+
+        char_name = char.get('name', name)
+        hp = char.get('hp', {})
+        max_hp = hp.get('max', 0)
+        char.setdefault('hp', {})
+        char['hp']['current'] = 0
+        char['status'] = 'dead'
+        char['died_at'] = self.get_timestamp()
+        if cause:
+            char['cause'] = cause
+
+        if not self._save_character(name, char):
+            return {'success': False}
+
+        print(f"DEATH {char_name} has died.")
+        if cause:
+            print(f"Cause: {cause}")
+        print(f"HP: 0/{max_hp}")
+        print("STATUS: DEAD")
+
+        return {
+            'success': True,
+            'name': char_name,
+            'status': 'dead',
+            'died_at': char['died_at'],
+            'cause': cause,
+        }
+
+    def become(self, npc_name: str) -> Dict[str, Any]:
+        """Hand off the active PC to a party member (Death Protocol SWAP).
+
+        Reads the named party member's character_sheet from npcs.json, flattens it
+        into the canonical character.json runtime shape, archives the current
+        character.json to fallen/<deadname>-<id>.json, writes the new sheet,
+        updates current_character on the campaign overview, and removes the
+        promoted NPC from the party list so they aren't double-tracked.
+        """
+        # Locate the party member sheet in npcs.json.
+        npcs = self.json_ops.load_json("npcs.json") or {}
+        npc = npcs.get(npc_name)
+        if npc is None:
+            # Alias-aware fallback (case/title drift).
+            from entity_aliases import resolve_entity_name
+            key = resolve_entity_name(npc_name, npcs)
+            if key:
+                npc_name = key
+                npc = npcs[key]
+        if npc is None:
+            print(f"[ERROR] NPC '{npc_name}' not found")
+            return {'success': False}
+        if not npc.get('is_party_member'):
+            print(f"[ERROR] '{npc_name}' is not a party member. Promote them first "
+                  f"(gm-npc.sh promote \"{npc_name}\").")
+            return {'success': False}
+
+        sheet = npc.get('character_sheet')
+        if not sheet:
+            print(f"[ERROR] '{npc_name}' has no character sheet to take over.")
+            return {'success': False}
+
+        # Build the new flat PC sheet from the party member's sheet.
+        new_char = to_flat(dict(sheet))
+        new_char['name'] = npc_name
+        new_char.setdefault('status', 'alive')
+        # A new PC is taking the helm; clear any stale death stamps.
+        new_char.pop('died_at', None)
+        new_char.pop('cause', None)
+
+        # Archive the fallen PC (if a character.json exists) before overwriting.
+        archived_path = None
+        if self.character_file.exists():
+            old = self._load_character()
+            fallen_dir = self.campaign_dir / "fallen"
+            fallen_dir.mkdir(parents=True, exist_ok=True)
+            dead_name = (old.get('name') if old else None) or 'fallen-hero'
+            dead_id = (old.get('id') if old else None) or self._name_to_id(dead_name)
+            archived_path = fallen_dir / f"{self._name_to_id(dead_name)}-{dead_id}.json"
+            with open(archived_path, 'w', encoding='utf-8') as f:
+                json.dump(old or {}, f, indent=2)
+
+        # Write the new character.json.
+        if not self.json_ops.save_json("character.json", new_char):
+            return {'success': False}
+
+        # Update current_character on the campaign overview.
+        self.json_ops.update_json(self.campaign_file, {'current_character': npc_name})
+
+        # Remove the promoted NPC from the party so they aren't double-tracked.
+        npcs = self.json_ops.load_json("npcs.json") or {}
+        if npc_name in npcs:
+            npcs[npc_name]['is_party_member'] = False
+            npcs[npc_name]['became_pc'] = True
+            self.json_ops.save_json("npcs.json", npcs)
+
+        print(f"BECOME You now play as {npc_name}.")
+        if archived_path is not None:
+            print(f"Archived the fallen hero to: {archived_path}")
+        hp = new_char.get('hp', {})
+        print(f"HP: {hp.get('current', 0)}/{hp.get('max', 0)} | "
+              f"Level {new_char.get('level', 1)} {new_char.get('race', '?')} "
+              f"{new_char.get('class', '?')}")
+
+        return {
+            'success': True,
+            'name': npc_name,
+            'archived': str(archived_path) if archived_path else None,
         }
 
     def modify_gold(self, name: str, amount: Optional[int] = None) -> Dict[str, Any]:
@@ -646,6 +791,15 @@ def main():
     hp_parser.add_argument('name', help='Character name')
     hp_parser.add_argument('amount', help='HP change (+5 to heal, -3 for damage)')
 
+    # Kill character (death state)
+    kill_parser = subparsers.add_parser('kill', help='Mark character dead (status + HP 0 + cause)')
+    kill_parser.add_argument('name', help='Character name')
+    kill_parser.add_argument('--cause', help='How they died')
+
+    # Become a party member (Death Protocol hand-off)
+    become_parser = subparsers.add_parser('become', help='Take over a party member as the active PC')
+    become_parser.add_argument('name', help='Party member NPC name')
+
     # Get full character JSON
     get_parser = subparsers.add_parser('get', help='Get full character JSON')
     get_parser.add_argument('name', help='Character name')
@@ -704,6 +858,19 @@ def main():
         else:
             sys.exit(emit_error(result.get('error', 'hp update failed'), json_mode=True))
         return
+    if json_mode and args.action in ('kill', 'become'):
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()):
+            if args.action == 'kill':
+                result = manager.kill_character(args.name, getattr(args, 'cause', None))
+            else:
+                result = manager.become(args.name)
+        if result.get('success'):
+            emit(result, json_mode=True)
+        else:
+            sys.exit(emit_error(result.get('error', f'{args.action} failed'), json_mode=True))
+        return
 
     if args.action == 'show':
         if args.name:
@@ -756,6 +923,16 @@ def main():
             sys.exit(1)
 
         result = manager.modify_hp(args.name, amount)
+        if not result.get('success'):
+            sys.exit(1)
+
+    elif args.action == 'kill':
+        result = manager.kill_character(args.name, getattr(args, 'cause', None))
+        if not result.get('success'):
+            sys.exit(1)
+
+    elif args.action == 'become':
+        result = manager.become(args.name)
         if not result.get('success'):
             sys.exit(1)
 

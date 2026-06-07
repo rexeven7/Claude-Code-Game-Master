@@ -31,9 +31,42 @@ def _is_rule_phrase(to: str) -> bool:
     return any(m in low for m in _RULE_MARKERS)
 
 
+def coerce_connections(locations: dict) -> int:
+    """Coerce bare-string connection entries to {"to": <string>} dicts in place.
+
+    Extractor agents sometimes emit `connections` as a list of plain location
+    names instead of the runtime {to, path} dict shape. The whole runtime
+    (move, integrity, location_manager) indexes `conn["to"]`, so a bare string
+    crashes with AttributeError. Coerce here so every downstream step operates
+    on dicts. Already-dict entries are left untouched; non-str/non-dict junk is
+    dropped. Returns the number of string entries coerced.
+    """
+    coerced = 0
+    for loc in (locations or {}).values():
+        if not isinstance(loc, dict):
+            continue
+        conns = loc.get("connections")
+        if conns is None:
+            continue
+        if not isinstance(conns, list):
+            loc["connections"] = []
+            continue
+        fixed = []
+        for conn in conns:
+            if isinstance(conn, dict):
+                fixed.append(conn)
+            elif isinstance(conn, str) and conn.strip():
+                fixed.append({"to": conn.strip()})
+                coerced += 1
+            # else: neither dict nor usable string -> drop
+        loc["connections"] = fixed
+    return coerced
+
+
 def normalize_connections(locations: dict) -> dict:
     """Canonicalize/relocate connection targets in place. Returns a report."""
     report = {"canonicalized": [], "relocated": [], "left": []}
+    coerce_connections(locations)
     for lname, loc in (locations or {}).items():
         if not isinstance(loc, dict):
             continue

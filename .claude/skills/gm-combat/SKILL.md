@@ -31,3 +31,4 @@ Advantage = 2d20 keep high; Disadvantage = keep low. Half cover +2 AC; 3/4 cover
 
 ## Death & Dying
 0 HP → unconscious + death saves (DC 10 Con each turn): 3 successes = stable, 3 failures = death. Nat 20 = 1 HP + conscious. Nat 1 = 2 failures. Damage ≥ max HP = instant death.
+Death is real and reachable — don't fudge saves to keep a doomed PC alive. Telegraph lethal fights first (an over-CR enemy should *read* as deadly), but once the player commits against the odds, let the dice fall. On PC death, run the **Death Protocol** (CLAUDE.md): persist → narrate → offer the character hand-off. The session does not end.

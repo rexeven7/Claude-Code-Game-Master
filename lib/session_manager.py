@@ -13,13 +13,14 @@ from datetime import datetime, timezone
 sys.path.insert(0, str(Path(__file__).parent))
 
 from entity_manager import EntityManager
+from character_schema import to_flat
 
 
 class SessionManager(EntityManager):
     """Manage D&D session operations. Inherits from EntityManager for common functionality."""
 
     # Per-campaign play-style defaults. `action_menu` controls whether the GM ends
-    # each beat with bracketed [A]-[E] choices (on) or an open prompt (off). Stored
+    # each beat with 3 numbered choices (on) or an open prompt (off). Stored
     # under overview.preferences; surfaced in get_full_context so the GM honors it.
     DEFAULT_PREFERENCES = {"action_menu": True}
 
@@ -145,6 +146,28 @@ class SessionManager(EntityManager):
 
     # ==================== Party Movement ====================
 
+    @staticmethod
+    def _normalize_connection_list(connections):
+        """Coerce a connections list to {to, ...} dicts; tolerate malformed data.
+
+        Extraction can leave bare-string connection entries. Everything here
+        indexes c.get("to"), so coerce strings to {"to": name} and drop junk
+        rather than crashing a move. Returns (list, changed_bool).
+        """
+        if not isinstance(connections, list):
+            return [], True
+        fixed = []
+        changed = False
+        for c in connections:
+            if isinstance(c, dict):
+                fixed.append(c)
+            elif isinstance(c, str) and c.strip():
+                fixed.append({"to": c.strip()})
+                changed = True
+            else:
+                changed = True  # drop None/other junk
+        return fixed, changed
+
     def _ensure_location_and_connection(self, old_location: str, new_location: str) -> None:
         """
         Auto-create destination location if missing and add bidirectional
@@ -165,15 +188,26 @@ class SessionManager(EntityManager):
 
         # Add bidirectional connection if old location is valid and known
         if old_location and old_location != "Unknown" and old_location in locations:
+            # Coerce malformed entries (bare-string connections from extraction)
+            # so a bad data file never hard-crashes a move on c.get("to").
+            old_connections, old_fixed = self._normalize_connection_list(
+                locations[old_location].get("connections", []))
+            new_connections, new_fixed = self._normalize_connection_list(
+                locations[new_location].get("connections", []))
+            if old_fixed:
+                locations[old_location]["connections"] = old_connections
+                changed = True
+            if new_fixed:
+                locations[new_location]["connections"] = new_connections
+                changed = True
+
             # Check if connection from old -> new exists
-            old_connections = locations[old_location].get("connections", [])
             if not any(c.get("to") == new_location for c in old_connections):
                 old_connections.append({"to": new_location, "path": "traveled"})
                 locations[old_location]["connections"] = old_connections
                 changed = True
 
             # Check if connection from new -> old exists
-            new_connections = locations[new_location].get("connections", [])
             if not any(c.get("to") == old_location for c in new_connections):
                 new_connections.append({"to": old_location, "path": "traveled"})
                 locations[new_location]["connections"] = new_connections
@@ -206,7 +240,7 @@ class SessionManager(EntityManager):
         # Update character's location if exists
         # Try new single character.json first, fall back to legacy characters/ dir
         if self.character_file.exists():
-            char_data = self.json_ops.load_json("character.json")
+            char_data = to_flat(self.json_ops.load_json("character.json"))
             char_data['current_location'] = location
             self.json_ops.save_json("character.json", char_data)
         else:
@@ -216,7 +250,7 @@ class SessionManager(EntityManager):
                 char_id = active_char.lower().replace(' ', '-')
                 char_file = self.characters_dir / f"{char_id}.json"
                 if char_file.exists():
-                    char_data = self.json_ops.load_json(str(char_file))
+                    char_data = to_flat(self.json_ops.load_json(str(char_file)))
                     char_data['current_location'] = location
                     self.json_ops.save_json(str(char_file), char_data)
 
@@ -388,12 +422,15 @@ class SessionManager(EntityManager):
         lines.append(f"Location: {location} | Time: {time_str}")
 
         # --- Play style (honor every beat; player toggles anytime) ---
+        lines.append("Pacing: match prose length to the beat — most beats stay tight and "
+                     "focused, but let big moments run longer when they earn it. Be "
+                     "pacing-aware; don't pad, don't truncate. One clear beat at a time.")
         if self.get_preferences().get("action_menu", True):
-            lines.append("Play style: action menu ON — end each beat with 3-5 bracketed "
-                         "[A]-[E] options.")
+            lines.append("Play style: action menu ON — end each beat with exactly 3 numbered "
+                         "options (1, 2, 3).")
         else:
             lines.append("Play style: action menu OFF — end beats with an open prompt; do "
-                         "NOT list bracketed [A]-[E] choices. The player drives freely. "
+                         "NOT list numbered choices. The player drives freely. "
                          "(Toggle: /gm choices on|off)")
 
         # --- Narrative Voice (write the prose in the world's authorial voice) ---
@@ -461,7 +498,7 @@ class SessionManager(EntityManager):
             import json as _json
             try:
                 with open(self.character_file, 'r', encoding='utf-8') as f:
-                    char = _json.load(f)
+                    char = to_flat(_json.load(f))
             except (ValueError, IOError):
                 pass
 
@@ -978,7 +1015,7 @@ def main():
             print(f"Action menu is {state}.")
         else:
             print(f"Action menu turned {state}. "
-                  f"{'Beats will end with [A]-[E] choices.' if current else 'Beats will end with an open prompt.'}")
+                  f"{'Beats will end with 3 numbered choices.' if current else 'Beats will end with an open prompt.'}")
 
 
 if __name__ == "__main__":

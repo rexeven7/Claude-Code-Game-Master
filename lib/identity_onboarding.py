@@ -7,8 +7,9 @@ Replaces the mandatory 9-step 5e builder with one question. The player picks:
   - original: a name + one-line concept (mechanics inferred silently by the kit)
   - nameless: a nameless traveler (zero required mechanics)
 
-All three produce an open-schema character (see character_schema). The full
-builder stays available as an opt-in. Mechanics are inferred + persisted
+All three build a character internally in the structured (open) shape, then
+persist it in the canonical FLAT shape via to_flat (see character_schema). The
+full builder stays available as an opt-in. Mechanics are inferred + persisted
 invisibly; the player spends the "I love this book" spike on story, not setup.
 """
 
@@ -20,6 +21,7 @@ from typing import Any, Dict, Optional
 sys.path.insert(0, str(Path(__file__).parent))
 
 from entity_manager import EntityManager
+from character_schema import to_flat
 
 
 def _default_vitals() -> Dict[str, Any]:
@@ -79,5 +81,9 @@ class IdentityOnboarding(EntityManager):
         return self.nameless()
 
     def save_character(self, char: Dict[str, Any]) -> bool:
-        """Persist the chosen identity as the campaign character (open schema)."""
-        return self.json_ops.save_json("character.json", char)
+        """Persist the chosen identity as the campaign character (canonical flat).
+
+        The builder works in the structured open shape; to_flat converts it to the
+        canonical flat shape the runtime reads (and preserves extras like voice/
+        origin/concept at the top level)."""
+        return self.json_ops.save_json("character.json", to_flat(char))

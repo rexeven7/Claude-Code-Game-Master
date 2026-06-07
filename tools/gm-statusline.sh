@@ -72,17 +72,17 @@ fi
 # --- Character fields -------------------------------------------------------
 IFS=$'\t' read -r NAME RACE CLASS LEVEL AC GP HP_CUR HP_MAX XP_CUR XP_NEXT LOC < <(
     jq -r '
-      [ (.name // "?"),
-        (.race // "?"),
-        (.class // "?"),
-        (.level // 1),
-        (.ac // "?"),
-        (.gold // 0),
-        (.hp.current // .hp // 0),
-        (.hp.max // .hp // 0),
-        (.xp.current // .xp // 0),
-        (.xp.next_level // 0),
-        (.current_location // "?")
+      [ (.name // .identity.name // "?"),
+        (.race // .identity.race // "?"),
+        (.class // .identity.class // "?"),
+        (.level // .progression.level // 1),
+        (.ac // .vitals.ac // "?"),
+        (.gold // .inventory.gold // 0),
+        (.hp.current // .vitals.hp.current // .hp // 0),
+        (.hp.max // .vitals.hp.max // .hp // 0),
+        (.xp.current // .progression.xp.current // .xp // 0),
+        (.xp.next_level // .progression.xp.next_level // 0),
+        (.current_location // .details.current_location // "?")
       ] | @tsv' "$CHAR"
 )
 
