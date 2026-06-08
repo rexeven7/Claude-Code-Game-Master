@@ -53,36 +53,52 @@ bash tools/gm-image.sh chronicler            # locked style + persona + name
 - If NONE is set, STOP and tell the GM to lock one (`/new-game` and `/import` do this
   at creation; the fix is `gm-image.sh chronicler --name/--style/--persona`). Do not invent your own.
 
-### 2. Gather the EXPLICIT visual facts (don't invent silently)
-Read the live state so the character/scene is CONSISTENT across images:
-- `bash tools/gm-player.sh show` — the PC's gear, condition (HP → wounded/bloodied), status.
-- `bash tools/gm-npc.sh status "<name>"` — for any NPC in frame.
+### 2. Pull the CANONICAL visual_appearance for EVERY character in frame (MANDATORY)
+Each character (the PC and every NPC) stores a locked `visual_appearance` block —
+the 11-field source of truth for how they look. **You MUST fetch it for every
+named character in the beat and reproduce it; never invent a look from scratch
+when one is stored.**
+```bash
+bash tools/gm-image.sh appearance "<character name>"   # PC or NPC; prints the bible line
+```
+This returns a ready-to-paste line, e.g.:
+`Tandy — female, late 20s, Human; messy dark-brown shoulder-length hair; ...; barefoot; scrappy underdog demeanor; small, slight build.`
+
+Also read the live state for THIS beat's deltas (condition/gear the block won't have):
+- `bash tools/gm-player.sh show` — PC HP → wounded/bloodied, latest gear.
+- `bash tools/gm-npc.sh status "<name>"` — NPC state + their `Appearance:` line.
 - `bash tools/gm-context.sh ["loc"]` — surroundings, source-grounded scene detail.
 - The GM's brief — the action/emotion of THIS beat.
 
-### 3. Build the prompt from the CONSISTENT DETAIL CHECKLIST
-For every character in frame, specify ALL of these literally (carry the same
-values image-to-image — this is what makes a recognizable, recurring character):
-- **Face** — shape, age, skin tone, distinguishing marks, expression.
-- **Hair** — color, length, style, condition (sweat-matted, wind-blown).
-- **Eyes** — color, what they're doing (wide, narrowed, dead-eyed).
-- **Build / demeanor** — physique, posture, body language, vibe (scrappy / regal / broken).
-- **Clothing** — every visible garment, color, fit, wear, branding/insignia.
-- **Gear & weapon** — what's held, what's holstered, how it's carried.
+If a character in frame has NO `visual_appearance` set yet, that's a setup gap:
+author one NOW so it's locked for every future image —
+`bash tools/gm-player.sh set-appearance --sex ... --age ...` (PC) or
+`bash tools/gm-npc.sh set-appearance "<name>" --sex ... --age ...` (NPC). The 11
+fields are: sex, age, race, species, hair, face, eyes, clothing, gear, demeanor, size.
+
+### 3. Build the prompt — open with style, then paste each character's bible verbatim
+For every character in frame, paste their fetched `visual_appearance` line and
+LAYER this beat's deltas on top (don't contradict the block):
 - **Condition** — wounds, blood, dirt, exhaustion, buffs/auras matching current HP & status.
+- **Action & expression** — what they're doing right now, the emotion on their face.
+Then specify the scene:
 - **Surroundings** — the location's defining materials, light, props, weather, depth.
 - **Composition & mood** — camera angle, framing, lighting, emotional charge of the beat.
 Then **REALLY lean into the world's aesthetic** — name the genre's signature
 textures, palette, and iconography explicitly. Generic = failure.
-Keep a stable short "character bible" line per recurring character and reuse it verbatim.
 
-### 4. Generate
+### 4. Generate — pass every character by name so their look is auto-injected too
 ```bash
-bash tools/gm-image.sh generate --title "<evocative title>" --prompt "In the style of ...: <full spec>"
+bash tools/gm-image.sh generate --title "<evocative title>" \
+  --character "Tandy" --character "<other NPC>" \
+  --prompt "In the style of ...: <full spec incl. each pasted appearance line>"
 # --quality low (throwaway gag) | medium (default) | high (marquee moment)
 ```
-The campaign's locked style is auto-appended too, but you STILL open with
-"In the style of ..." yourself — belt and suspenders keeps it on-model.
+`--character` auto-injects that character's stored `visual_appearance` (belt and
+suspenders with the line you already pasted), and the campaign's locked style is
+auto-appended — but you STILL open with "In the style of ..." and paste the
+appearance lines yourself. Redundancy here is what keeps recurring characters
+on-model (right sex, right gear, right build) image after image.
 
 ### 5. Return the link + a diegetic caption
 Return to the GM: the clickable `file://` link, plus a one-line in-world caption
@@ -90,7 +106,10 @@ in the chronicler's voice (the GM shows it framed as that chronicler's artifact)
 
 ## Hard rules
 - NEVER put game UI, HUD, health bars, or text/letters in the image — prompt says so.
-- NEVER drift the locked art style or a recurring character's fixed features.
+- NEVER drift the locked art style or a recurring character's fixed features. The
+  stored `visual_appearance` is binding — match the character's **sex**, race,
+  build, hair, and signature gear exactly. Getting a recurring character's sex or
+  look wrong is the #1 failure; the block exists to prevent it.
 - Be explicit over clever: a long, concrete prompt beats a short evocative one.
 - If `gm-image.sh` reports images DISABLED (no OPENAI_API_KEY) or moderation-blocks,
   report that plainly to the GM and stop — don't loop.

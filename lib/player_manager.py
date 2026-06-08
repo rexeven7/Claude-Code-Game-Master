@@ -168,6 +168,23 @@ class PlayerManager(EntityManager):
             return None
         return char
 
+    def get_visual_appearance(self, name: str = None) -> Optional[Dict[str, Any]]:
+        """Return the PC's canonical visual_appearance block, or None if no PC."""
+        char = self._load_character(name)
+        if not char:
+            return None
+        import visual_appearance as va_mod
+        return va_mod.normalize(char.get('visual_appearance'))
+
+    def set_visual_appearance(self, name: str = None, **fields) -> bool:
+        """Merge-update the PC's visual_appearance (only non-empty fields change)."""
+        char = self._load_character(name)
+        if not char:
+            return False
+        import visual_appearance as va_mod
+        char['visual_appearance'] = va_mod.merge(char.get('visual_appearance'), fields)
+        return self._save_character(char.get('name', name), char)
+
     def list_players(self) -> List[str]:
         """List all player character IDs"""
         players = []
@@ -804,6 +821,15 @@ def main():
     get_parser = subparsers.add_parser('get', help='Get full character JSON')
     get_parser.add_argument('name', help='Character name')
 
+    # Visual appearance (canonical look for consistent image generation)
+    import visual_appearance as va_mod
+    appearance_parser = subparsers.add_parser('appearance', help='Get the PC visual_appearance')
+    appearance_parser.add_argument('name', nargs='?', help='Character name (optional)')
+    setappear_parser = subparsers.add_parser('set-appearance', help='Set PC visual_appearance fields')
+    setappear_parser.add_argument('name', nargs='?', help='Character name (optional)')
+    for _f in va_mod.VISUAL_FIELDS:
+        setappear_parser.add_argument(f'--{_f}')
+
     # Modify gold
     gold_parser = subparsers.add_parser('gold', help='Modify or show character gold')
     gold_parser.add_argument('name', help='Character name')
@@ -942,6 +968,23 @@ def main():
             print(json.dumps(char, indent=2))
         else:
             sys.exit(1)
+
+    elif args.action == 'appearance':
+        va = manager.get_visual_appearance(args.name)
+        if va is None:
+            sys.exit(emit_error("no active character", json_mode=json_mode) if json_mode else 1)
+        if json_mode:
+            emit(va, json_mode=True)
+        else:
+            char = manager._load_character(args.name)
+            line = va_mod.format_line((char or {}).get('name', 'The hero'), va)
+            print(line if line else "(no visual_appearance set yet)")
+
+    elif args.action == 'set-appearance':
+        fields = {f: getattr(args, f) for f in va_mod.VISUAL_FIELDS}
+        if not manager.set_visual_appearance(args.name, **fields):
+            sys.exit(1)
+        print("[SUCCESS] Updated visual_appearance for the active character")
 
     elif args.action == 'gold':
         # Parse amount if provided

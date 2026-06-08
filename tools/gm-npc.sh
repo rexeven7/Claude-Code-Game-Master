@@ -261,6 +261,14 @@ case "$ACTION" in
         $PYTHON_CMD "$LIB_DIR/npc_manager.py" mood "$NAME" "$@"
         ;;
 
+    appearance)
+        $PYTHON_CMD "$LIB_DIR/npc_manager.py" appearance "$NAME" "$@"
+        ;;
+
+    set-appearance)
+        $PYTHON_CMD "$LIB_DIR/npc_manager.py" set-appearance "$NAME" "$@"
+        ;;
+
     *)
         echo "Error: Unknown action '$ACTION'"
         echo "Run 'gm-npc.sh' without arguments to see all available actions"

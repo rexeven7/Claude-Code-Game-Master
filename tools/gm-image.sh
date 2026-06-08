@@ -21,6 +21,8 @@ if [ "$#" -lt 1 ]; then
     echo "      --title <text>           Scene title (used in the filename)"
     echo "      --quality low|medium|high  Default: medium (~\$0.04 landscape)"
     echo "      --size 1536x1024           Default: 1536x1024 (cinematic landscape)"
+    echo "      --character <name>         Auto-inject that character's visual_appearance (repeatable)"
+    echo "  appearance <name>          - Print a character's visual_appearance bible line (PC or NPC)"
     echo "  chronicler                 - Show this campaign's in-world chronicler"
     echo "      --name <text>            Set the chronicler's name"
     echo "      --style <text>           Set the locked art-style signature (auto-added to every prompt)"
@@ -41,13 +43,14 @@ case "$ACTION" in
     generate)
         require_active_campaign
 
-        PROMPT="" ; TITLE="" ; QUALITY="medium" ; SIZE="1536x1024"
+        PROMPT="" ; TITLE="" ; QUALITY="medium" ; SIZE="1536x1024" ; CHARS=()
         while [ "$#" -gt 0 ]; do
             case "$1" in
                 --prompt)    PROMPT="$2" ; shift 2 ;;
                 --title)     TITLE="$2"  ; shift 2 ;;
                 --quality)   QUALITY="$2"; shift 2 ;;
                 --size)      SIZE="$2"   ; shift 2 ;;
+                --character) CHARS+=(--character "$2") ; shift 2 ;;
                 *) error "Unknown flag: $1" ; exit 1 ;;
             esac
         done
@@ -64,7 +67,8 @@ case "$ACTION" in
 
         # image_gen.py emits a JSON result on success; capture it.
         RESULT=$($PYTHON_CMD "$LIB_DIR/image_gen.py" \
-            --prompt "$PROMPT" --title "$TITLE" --quality "$QUALITY" --size "$SIZE" --json)
+            --prompt "$PROMPT" --title "$TITLE" --quality "$QUALITY" --size "$SIZE" \
+            "${CHARS[@]}" --json)
         STATUS=$?
         if [ "$STATUS" -ne 0 ]; then
             exit "$STATUS"  # image_gen.py already printed the actionable error
@@ -108,6 +112,16 @@ case "$ACTION" in
         exit $?
         ;;
 
+    appearance)
+        require_active_campaign
+        if [ -z "$1" ]; then
+            error "Usage: gm-image.sh appearance \"<character name>\""
+            exit 1
+        fi
+        $PYTHON_CMD "$LIB_DIR/image_gen.py" --appearance "$1"
+        exit $?
+        ;;
+
     log)
         require_active_campaign
         LOG_FILE="$WORLD_STATE_DIR/images/_gen-log.jsonl"
@@ -134,7 +148,7 @@ PY
 
     *)
         echo "Unknown action: $ACTION"
-        echo "Valid actions: generate, log"
+        echo "Valid actions: generate, chronicler, appearance, log"
         exit 1
         ;;
 esac

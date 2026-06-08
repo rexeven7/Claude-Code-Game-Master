@@ -212,12 +212,17 @@ Traits: Lucky, Nimble, Brave
 
 Save this character? (yes/no)
 
-When user confirms "yes", execute:
+When user confirms "yes", execute (the saved JSON MUST include a fully-authored
+`visual_appearance` block — it is the locked look every future image renders):
 ```bash
-bash tools/gm-player.sh save-json '{"name":"Character Name","race":"Race","class":"Class","level":1,"stats":{"str":15,"dex":14,"con":13,"int":12,"wis":10,"cha":8},"ac":16,"skills":{"athletics":5},"equipment":["Longsword","Shield"],"features":["Fighting Style"],"spells":{"cantrips":[],"level_1":[]},"background":"Background","alignment":"Alignment","bonds":"Bonds text","flaws":"Flaws text","ideals":"Ideals text","traits":"Traits text"}'
+bash tools/gm-player.sh save-json '{"name":"Character Name","race":"Race","class":"Class","level":1,"stats":{"str":15,"dex":14,"con":13,"int":12,"wis":10,"cha":8},"ac":16,"skills":{"athletics":5},"equipment":["Longsword","Shield"],"features":["Fighting Style"],"spells":{"cantrips":[],"level_1":[]},"background":"Background","alignment":"Alignment","bonds":"Bonds text","flaws":"Flaws text","ideals":"Ideals text","traits":"Traits text","visual_appearance":{"sex":"female","age":"late 20s","race":"Race","species":"human","hair":"color, length, style","face":"shape, skin tone, marks, default expression","eyes":"color + what they do","clothing":"every visible garment, color, fit, wear, branding","gear":"visible weapons/items, how carried; note if barefoot","demeanor":"posture, body language, vibe","size":"build + scale"}}'
 ```
 
-Replace placeholder values with actual character data collected during creation process.
+**`visual_appearance` is REQUIRED** and has EXACTLY these 11 keys:
+`sex, age, race, species, hair, face, eyes, clothing, gear, demeanor, size`.
+Ask the player how they picture their character (or infer it from race/class/
+background) and fill every field — never leave the look blank. Replace all
+placeholder values with the real character data collected during creation.
 
 ## Ready to Play Message
 

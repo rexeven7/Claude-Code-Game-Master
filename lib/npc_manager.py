@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from entity_manager import EntityManager
+import visual_appearance as va_mod
 
 
 # Default character sheet for new party members
@@ -71,6 +72,7 @@ class NPCManager(EntityManager):
             'attitude': attitude.lower(),
             'created': self.get_timestamp(),
             'events': [],
+            'visual_appearance': va_mod.empty_template(),
             'tags': {
                 'locations': [],
                 'quests': []
@@ -139,6 +141,11 @@ class NPCManager(EntityManager):
         # Basic info
         lines.append(f"Description: {npc.get('description', 'No description')}")
         lines.append(f"Attitude: {npc.get('attitude', 'unknown')}")
+
+        # Visual appearance (for consistent image generation)
+        va_line = va_mod.format_line(name, npc.get('visual_appearance'))
+        if va_line:
+            lines.append(f"Appearance: {va_line}")
 
         # Party member status
         if npc.get('is_party_member'):
@@ -307,6 +314,21 @@ class NPCManager(EntityManager):
     def shift_mood(self, name: str, mood: str) -> bool:
         """Update an NPC's current_mood (persists across sessions)."""
         return self._update_entity(self.npcs_file, name, {'current_mood': mood})
+
+    def get_visual_appearance(self, name: str) -> Optional[Dict[str, Any]]:
+        """Return an NPC's canonical visual_appearance block, or None if not found."""
+        npc = self.get_npc_status(name)
+        if npc is None:
+            return None
+        return va_mod.normalize(npc.get('visual_appearance'))
+
+    def set_visual_appearance(self, name: str, **fields) -> bool:
+        """Merge-update an NPC's visual_appearance (only non-empty fields change)."""
+        npc = self.get_npc_status(name)
+        if npc is None:
+            return False
+        merged = va_mod.merge(npc.get('visual_appearance'), fields)
+        return self._update_entity(self.npcs_file, name, {'visual_appearance': merged})
 
     def _manage_tags(self, name: str, tag_type: str, tags: tuple, action: str) -> bool:
         """
@@ -757,6 +779,7 @@ class NPCManager(EntityManager):
                 'attitude': attitude.lower(),
                 'created': self.get_timestamp(),
                 'events': npc_data.get('events', []),
+                'visual_appearance': va_mod.normalize(npc_data.get('visual_appearance')),
                 'tags': {
                     'locations': npc_data.get('location_tags', []),
                     'quests': npc_data.get('quest_tags', [])
@@ -854,6 +877,14 @@ def main():
     mood_parser = subparsers.add_parser('mood', help='Shift NPC current mood')
     mood_parser.add_argument('name', help='NPC name')
     mood_parser.add_argument('mood', help='New mood')
+
+    # Visual appearance (canonical look for consistent image generation)
+    appearance_parser = subparsers.add_parser('appearance', help='Get NPC visual_appearance')
+    appearance_parser.add_argument('name', help='NPC name')
+    setappear_parser = subparsers.add_parser('set-appearance', help='Set NPC visual_appearance fields')
+    setappear_parser.add_argument('name', help='NPC name')
+    for _f in va_mod.VISUAL_FIELDS:
+        setappear_parser.add_argument(f'--{_f}')
 
     # List NPCs
     list_parser = subparsers.add_parser('list', help='List NPCs')
@@ -1001,6 +1032,23 @@ def main():
     elif args.action == 'mood':
         if not manager.shift_mood(args.name, args.mood):
             sys.exit(1)
+
+    elif args.action == 'appearance':
+        va = manager.get_visual_appearance(args.name)
+        if va is None:
+            sys.exit(1)
+        import json
+        if json_mode:
+            print(json.dumps(va))
+        else:
+            line = va_mod.format_line(args.name, va)
+            print(line if line else "(no visual_appearance set yet)")
+
+    elif args.action == 'set-appearance':
+        fields = {f: getattr(args, f) for f in va_mod.VISUAL_FIELDS}
+        if not manager.set_visual_appearance(args.name, **fields):
+            sys.exit(1)
+        print(f"[SUCCESS] Updated visual_appearance for {args.name}")
 
     elif args.action == 'list':
         npcs = manager.list_npcs(args.attitude, args.location, args.quest)

@@ -177,6 +177,14 @@ case "$ACTION" in
         fi
         ;;
 
+    "appearance")
+        $PYTHON_CMD "$LIB_DIR/player_manager.py" appearance "$@"
+        ;;
+
+    "set-appearance")
+        $PYTHON_CMD "$LIB_DIR/player_manager.py" set-appearance "$@"
+        ;;
+
     *)
         echo "D&D Player Character Manager"
         echo "Usage: gm-player.sh <action> [args]"

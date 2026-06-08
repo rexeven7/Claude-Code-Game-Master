@@ -15,6 +15,7 @@ lib_path = Path(__file__).parent.parent.parent / "lib"
 sys.path.insert(0, str(lib_path))
 
 from campaign_manager import CampaignManager
+import visual_appearance as va_mod
 
 def calculate_modifier(score):
     """Calculate ability modifier from ability score"""
@@ -118,7 +119,9 @@ def save_character(character_data):
         "traits": character_data.get('traits', ''),
         "notes": character_data.get('notes', []),
         "gold": character_data.get('gold', 0),
-        "xp": character_data.get('xp', {"current": 0, "next_level": 300})
+        "xp": character_data.get('xp', {"current": 0, "next_level": 300}),
+        # Canonical look-of-the-character for consistent image generation.
+        "visual_appearance": va_mod.normalize(character_data.get('visual_appearance'))
     }
 
     # Get the active campaign directory

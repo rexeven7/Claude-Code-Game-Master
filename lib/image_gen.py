@@ -27,11 +27,51 @@ import urllib.request
 from pathlib import Path
 
 from campaign_manager import CampaignManager
+import visual_appearance as va_mod
 
 
 def resolve_campaign_dir(world_state_dir: str = "world-state"):
     """Return the active campaign dir as a Path, or None if none is active."""
     return CampaignManager(world_state_dir).get_active_campaign_dir()
+
+
+def appearance_line(name: str, campaign_dir=None) -> str:
+    """Return the 'character bible' line for a character by name.
+
+    Looks up the active PC (character.json) first, then NPCs (npcs.json), and
+    renders the canonical visual_appearance block as one prompt-ready line.
+    Returns "" if the name is unknown or has no appearance authored yet.
+    """
+    campaign_dir = campaign_dir or resolve_campaign_dir()
+    if campaign_dir is None or not name:
+        return ""
+    campaign_dir = Path(campaign_dir)
+
+    # PC first.
+    char_path = campaign_dir / "character.json"
+    if char_path.exists():
+        try:
+            char = json.loads(char_path.read_text(encoding="utf-8"))
+            if str(char.get("name", "")).strip().lower() == name.strip().lower():
+                return va_mod.format_line(char.get("name", name),
+                                          char.get("visual_appearance"))
+        except (OSError, ValueError):
+            pass
+
+    # Then NPCs (case-insensitive key match).
+    npcs_path = campaign_dir / "npcs.json"
+    if npcs_path.exists():
+        try:
+            npcs = json.loads(npcs_path.read_text(encoding="utf-8"))
+            if isinstance(npcs.get("npcs"), dict):
+                npcs = npcs["npcs"]
+            for key, data in npcs.items():
+                if key.strip().lower() == name.strip().lower() and isinstance(data, dict):
+                    return va_mod.format_line(key, data.get("visual_appearance"))
+        except (OSError, ValueError):
+            pass
+
+    return ""
 
 
 CHRONICLER_FILE = "chronicler.json"
@@ -133,8 +173,13 @@ class ImageGenError(Exception):
 
 
 def generate_image(prompt: str, *, title: str = "", quality: str = DEFAULT_QUALITY,
-                   size: str = DEFAULT_SIZE, model: str = DEFAULT_MODEL) -> dict:
+                   size: str = DEFAULT_SIZE, model: str = DEFAULT_MODEL,
+                   characters=None) -> dict:
     """Generate one image and save it under the active campaign's images/ dir.
+
+    ``characters`` is an optional list of character names in frame; each one's
+    canonical visual_appearance block is auto-injected into the prompt so the PC
+    and NPCs render CONSISTENTLY image-to-image, even on direct/fallback calls.
 
     Returns {path, rel_path, cost, model, quality, size, title}. Raises
     ImageGenError for actionable problems (no campaign, no key, moderation).
@@ -152,13 +197,21 @@ def generate_image(prompt: str, *, title: str = "", quality: str = DEFAULT_QUALI
     if not prompt or not prompt.strip():
         raise ImageGenError("Empty prompt — describe the scene to illustrate.")
 
+    final_prompt = prompt
+
+    # Auto-inject each named character's canonical look so the PC/NPCs render
+    # consistently every time. Skipped if the caller already spelled it out.
+    for cname in (characters or []):
+        line = appearance_line(cname, campaign_dir)
+        if line and cname.strip().lower() not in prompt.lower():
+            final_prompt = f"{final_prompt.rstrip()}\n\nCharacter (render exactly): {line}"
+
     # Lock the campaign's art-style signature into every prompt so the gallery
     # reads like one artbook even if the caller forgets to restate the style.
     chronicler = load_chronicler(campaign_dir)
-    final_prompt = prompt
     style = (chronicler or {}).get("style", "").strip()
-    if style and style.lower() not in prompt.lower():
-        final_prompt = f"{prompt.rstrip()}\n\nConsistent art style (campaign signature): {style}."
+    if style and style.lower() not in final_prompt.lower():
+        final_prompt = f"{final_prompt.rstrip()}\n\nConsistent art style (campaign signature): {style}."
 
     payload = json.dumps({
         "model": model,
@@ -245,6 +298,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a scene image with gpt-image-2")
     parser.add_argument("--prompt", help="Scene description (or read from stdin if omitted)")
     parser.add_argument("--title", default="", help="Scene title (used in filename + canvas)")
+    parser.add_argument("--character", action="append", default=[], metavar="NAME",
+                        help="Character in frame; auto-injects their visual_appearance. Repeatable.")
+    parser.add_argument("--appearance", metavar="NAME",
+                        help="Print one character's visual_appearance bible line and exit")
     parser.add_argument("--quality", default=DEFAULT_QUALITY, choices=["low", "medium", "high", "auto"])
     parser.add_argument("--size", default=DEFAULT_SIZE, help="e.g. 1536x1024, 1024x1024, auto")
     parser.add_argument("--json", action="store_true", help="Emit the result as JSON")
@@ -256,6 +313,17 @@ def main() -> None:
     parser.add_argument("--style", help="Locked art-style signature (with --set-chronicler)")
     parser.add_argument("--persona", help="Chronicler persona/voice (with --set-chronicler)")
     args = parser.parse_args()
+
+    if args.appearance is not None:
+        line = appearance_line(args.appearance)
+        if args.json:
+            print(json.dumps({"name": args.appearance, "appearance": line}))
+        elif line:
+            print(line)
+        else:
+            print(f"No visual_appearance set for '{args.appearance}' "
+                  "(set it via gm-npc.sh set-appearance / gm-player.sh set-appearance).")
+        return
 
     if args.show_chronicler:
         chronicler = load_chronicler()
@@ -287,7 +355,8 @@ def main() -> None:
     prompt = args.prompt if args.prompt is not None else sys.stdin.read()
 
     try:
-        result = generate_image(prompt, title=args.title, quality=args.quality, size=args.size)
+        result = generate_image(prompt, title=args.title, quality=args.quality,
+                                size=args.size, characters=args.character)
     except ImageGenError as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         sys.exit(1)

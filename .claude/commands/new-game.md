@@ -181,7 +181,22 @@ bash tools/gm-image.sh chronicler \
 ```
 
 The `scene-illustrator` agent READS this locked style and opens every prompt with
-it — it never picks its own. Make the mashup genuinely surprising.
+it — it never picks its own. Make the mashup genuinely surprising. This single
+chronicler record carries BOTH halves of the image identity — the **art style**
+(`--style`) and the **art narrator** (`--name` / `--persona`, the in-world entity
+who "makes" every picture). Lock both now; they never change in play.
+
+**Author a `visual_appearance` block for every notable NPC** (and the PC at
+`/create-character`). It is the locked look every future image renders, with
+EXACTLY these 11 keys: `sex, age, race, species, hair, face, eyes, clothing,
+gear, demeanor, size`. Ground each field in the source/bible; leave unknowns "".
+Set them in batch as the world consolidates:
+```bash
+bash tools/gm-npc.sh set-appearance "<NPC name>" \
+  --sex "..." --age "..." --race "..." --species "..." --hair "..." \
+  --face "..." --eyes "..." --clothing "..." --gear "..." --demeanor "..." --size "..."
+```
+(Extracted/imported NPCs already carry the empty block from `NPC_SCHEMA` — fill it.)
 
 Update `campaign-overview.json` (starting location from the bible's geography,
 date/time, `session_count: 0`) and initialize `session-log.md` with the world
@@ -205,7 +220,8 @@ Run **`/create-character`**.
 - [ ] consolidated `locations/npcs/facts.json` + merged bible graphs
 - [ ] `current-document.txt` embedded (RAG returns hits)
 - [ ] `/world-check` passes
-- [ ] chronicler + art style locked (`gm-image.sh chronicler`) — style starts "In the style of ...", a creative mashup
+- [ ] chronicler locked (`gm-image.sh chronicler`) — both the art **style** (starts "In the style of ...", a creative mashup) AND the art **narrator** (name + persona)
+- [ ] every notable NPC has a `visual_appearance` block (11 keys); PC gets one at `/create-character`
 - [ ] overview + session log set; handed off to `/create-character`
 
 ## ERROR RECOVERY

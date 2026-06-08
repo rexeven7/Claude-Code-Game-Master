@@ -11,6 +11,14 @@ NPC_SCHEMA = {
     "attitude": "",  # enum: friendly/neutral/hostile/suspicious/helpful
     "location_tags": [],  # Where they appear in the module
     "events": [],  # Optional: notable events or quests
+    # Canonical look for consistent image generation. Fill every field you can
+    # ground in the source; leave unknowns "". Keys are FIXED (see
+    # lib/visual_appearance.py VISUAL_FIELDS).
+    "visual_appearance": {
+        "sex": "", "age": "", "race": "", "species": "", "hair": "",
+        "face": "", "eyes": "", "clothing": "", "gear": "",
+        "demeanor": "", "size": ""
+    },
     "stats": {  # Optional combat stats
         "ac": None,
         "hp": None,

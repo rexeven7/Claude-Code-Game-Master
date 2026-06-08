@@ -72,9 +72,24 @@ uv run python features/character-creation/save_character.py '<character_json>'
 #   "bonds": "Protect my family honor",
 #   "flaws": "Quick to anger when honor questioned",
 #   "ideals": "Courage before all else",
-#   "traits": "Never backs down from a challenge"
+#   "traits": "Never backs down from a challenge",
+#   # REQUIRED: the locked look every future image renders. All 11 keys.
+#   "visual_appearance": {
+#     "sex": "male", "age": "middle-aged", "race": "Mountain Dwarf",
+#     "species": "dwarf", "hair": "long braided iron-grey beard, balding",
+#     "face": "ruddy weathered skin, broad nose, stern",
+#     "eyes": "deep-set brown, steady", "clothing": "dented chain mail, green cloak",
+#     "gear": "longsword and round shield, both well-used", "demeanor": "stoic, planted, immovable",
+#     "size": "short and broad, heavily muscled"
+#   }
 # }
 ```
+
+**Always author `visual_appearance` (all 11 keys: sex, age, race, species, hair,
+face, eyes, clothing, gear, demeanor, size).** Ask the player how they picture
+their character, or infer it from race/class/background — never leave it blank.
+This block is what keeps the character on-model (right sex, right look) in every
+generated image.
 
 ## Presentation Style
 
