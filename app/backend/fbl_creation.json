@@ -1,0 +1,549 @@
+{
+  "professions": {
+    "Druid": {
+      "key_attribute": "wits",
+      "skills": [
+        "endurance",
+        "survival",
+        "insight",
+        "healing",
+        "animal handling"
+      ],
+      "talents": [
+        {
+          "name": "Path of Healing",
+          "desc": "Lay on hands to heal a companion's attributes."
+        },
+        {
+          "name": "Path of Sight",
+          "desc": "Sense unnatural phenomena and read nature's omens."
+        },
+        {
+          "name": "Path of Shifting Shapes",
+          "desc": "Take the form of an animal."
+        }
+      ],
+      "gear": [
+        "Staff or knife",
+        "One trade good of your choice",
+        "D6 silver"
+      ],
+      "pride": [
+        "You are nobler than other people and the gods love you more.",
+        "You sense unnatural phenomena before anyone else.",
+        "Demons instinctively fear you."
+      ],
+      "dark_secret": [
+        "You enjoy wallowing in the mud and to live off what others would never eat.",
+        "As everyone and everything are part of Clay's creation, you lack respect for other's property.",
+        "You are a moralizing know-i t-a ll who thinks you always know the will of the gods."
+      ]
+    },
+    "Fighter": {
+      "key_attribute": "strength",
+      "skills": [
+        "might",
+        "endurance",
+        "melee",
+        "crafting",
+        "move"
+      ],
+      "talents": [
+        {
+          "name": "Path of the Blade",
+          "desc": "Reroll melee attack dice; a master of the sword."
+        },
+        {
+          "name": "Path of the Enemy",
+          "desc": "Read a foe and anticipate their moves in a duel."
+        },
+        {
+          "name": "Path of the Shield",
+          "desc": "Parry with a shield and guard your allies."
+        }
+      ],
+      "gear": [
+        "A one-handed weapon of your choice",
+        "Studded leather armor (AR 1)",
+        "One trade good",
+        "D6 silver"
+      ],
+      "pride": [
+        "You never back away from a fight.",
+        "You can endure any injury.",
+        "You never betray your friends."
+      ],
+      "dark_secret": [
+        "You sometimes take to the bottle to chase away the memories of all those you have killed.",
+        "Secretly you enjoy inflicting pain and injury on others.",
+        "Once, you killed a Rust Brother, and you are now wanted by them."
+      ]
+    },
+    "Hunter": {
+      "key_attribute": "agility",
+      "skills": [
+        "stealth",
+        "move",
+        "marksmanship",
+        "scouting",
+        "survival"
+      ],
+      "talents": [
+        {
+          "name": "Path of the Arrow",
+          "desc": "Deadlier with the bow; extra effect on ranged hits."
+        },
+        {
+          "name": "Path of the Beast",
+          "desc": "Bond with and command an animal companion."
+        },
+        {
+          "name": "Path of the Forest",
+          "desc": "Move unseen and unhindered through the wilds."
+        }
+      ],
+      "gear": [
+        "Bow and arrows",
+        "Knife",
+        "One trade good",
+        "D6 silver"
+      ],
+      "pride": [
+        "You can survive alone in the wilds for weeks.",
+        "Your arrow always hits its mark.",
+        "The animals of the forests are your friends and do you no harm."
+      ],
+      "dark_secret": [
+        "You feel uncomfortable among other people and prefer to be alone.",
+        "The old wound from the claw of a demonic beast never fully healed.",
+        "Once, you left a wounded friend to die in the woods to save yourself."
+      ]
+    },
+    "Minstrel": {
+      "key_attribute": "empathy",
+      "skills": [
+        "lore",
+        "insight",
+        "manipulation",
+        "performance",
+        "healing"
+      ],
+      "talents": [
+        {
+          "name": "Path of the Hymn",
+          "desc": "Sing to heal and hearten your companions."
+        },
+        {
+          "name": "Path of the Song",
+          "desc": "Sway moods and minds with performance."
+        },
+        {
+          "name": "Path of the Warcry",
+          "desc": "A battle-shout that frightens foes or steels allies."
+        }
+      ],
+      "gear": [
+        "Lyre or flute",
+        "Knife",
+        "One trade good",
+        "D6 silver"
+      ],
+      "pride": [
+        "Your songs can bring warmth to the coldest of hearts.",
+        "You remember all the tales and legends of the Forbidden Lands.",
+        "Your friends trust you with their lives."
+      ],
+      "dark_secret": [
+        "You are haunted by doubt and don't believe in the songs you sing.",
+        "You are secretly deeply in love with an NPC or another PC.",
+        "You once served the Rust Brothers as their jester, but managed to escape."
+      ]
+    },
+    "Peddler": {
+      "key_attribute": "empathy",
+      "skills": [
+        "crafting",
+        "sleight of hand",
+        "scouting",
+        "insight",
+        "manipulation"
+      ],
+      "talents": [
+        {
+          "name": "Path of Treasure",
+          "desc": "You sniff out riches and always have a useful trinket."
+        },
+        {
+          "name": "Path of Words",
+          "desc": "Talk past trouble; lies come easily."
+        },
+        {
+          "name": "Path of Many Things",
+          "desc": "Produce just the right item from your pack."
+        }
+      ],
+      "gear": [
+        "Knife",
+        "Three trade goods of your choice",
+        "D6 silver"
+      ],
+      "pride": [
+        "You have honest eyes.",
+        "You can make anyone trust you.",
+        "When you hear of treasure, nothing can stop your pursuit of it."
+      ],
+      "dark_secret": [
+        "You owe silver to a powerful individual. A lot of silver.",
+        "You conned a Rust Brother and now they are bent on revenge.",
+        "You don't trust anyone and think they all want to take your silver."
+      ]
+    },
+    "Rider": {
+      "key_attribute": "agility",
+      "skills": [
+        "endurance",
+        "melee",
+        "marksmanship",
+        "survival",
+        "animal handling"
+      ],
+      "talents": [
+        {
+          "name": "Path of the Companion",
+          "desc": "Your mount obeys without a roll and fights at your side."
+        },
+        {
+          "name": "Path of the Knight",
+          "desc": "Devastating mounted charges."
+        },
+        {
+          "name": "Path of the Plains",
+          "desc": "Endure and navigate the open wilds."
+        }
+      ],
+      "gear": [
+        "A riding horse",
+        "A one-handed weapon",
+        "One trade good",
+        "D6 silver"
+      ],
+      "pride": [
+        "Aslenians are nobler than other people.",
+        "On your horse, you are faster than the wind.",
+        "Horse or no horse, you never lose your balance."
+      ],
+      "dark_secret": [
+        "You enjoy setting things on fire - ostensibly in the name of the god Horn, but you like it, too.",
+        "Your horse is more important to you than any human. Others cannot understand your bond.",
+        "You panic in closed and cramped chambers."
+      ]
+    },
+    "Rogue": {
+      "key_attribute": "agility",
+      "skills": [
+        "melee",
+        "stealth",
+        "sleight of hand",
+        "move",
+        "manipulation"
+      ],
+      "talents": [
+        {
+          "name": "Path of the Face",
+          "desc": "Disguise and assume other identities."
+        },
+        {
+          "name": "Path of the Killer",
+          "desc": "Strike harder against the unaware."
+        },
+        {
+          "name": "Path of Poison",
+          "desc": "Brew and apply poisons."
+        }
+      ],
+      "gear": [
+        "Dagger",
+        "Two trade goods of your choice",
+        "D6 silver"
+      ],
+      "pride": [
+        "No one has a softer step than you.",
+        "You only steal from those who deserve it.",
+        "No one can catch you."
+      ],
+      "dark_secret": [
+        "You compulsively steal valuables you catch sight of.",
+        "Once, you stole something valuable from a Rust Brother and now they seek revenge.",
+        "Your purse is often empty, for you spend silver as swiftly as you obtain it."
+      ]
+    },
+    "Sorcerer": {
+      "key_attribute": "wits",
+      "skills": [
+        "crafting",
+        "sleight of hand",
+        "lore",
+        "insight",
+        "manipulation"
+      ],
+      "talents": [
+        {
+          "name": "Path of Blood",
+          "desc": "Blood magic - healing and harm."
+        },
+        {
+          "name": "Path of Death",
+          "desc": "Necromancy and command of the dead."
+        },
+        {
+          "name": "Path of Signs",
+          "desc": "Runes and symbols of power."
+        },
+        {
+          "name": "Path of Stone",
+          "desc": "Shape earth and stone."
+        }
+      ],
+      "gear": [
+        "Staff or knife",
+        "Pouch of reagents",
+        "One trade good",
+        "D6 silver"
+      ],
+      "pride": [
+        "Nothing scares you, as you have seen the world behind the veil.",
+        "Whoever threatens you will die a painful death.",
+        "You have read many books and you know the ways of the world."
+      ],
+      "dark_secret": [
+        "You are haunted by visions of the world behind the veil.",
+        "Your yearning for more magical power is stronger than anything else.",
+        "Zygofer the Spellbinder haunts you in your dreams and makes you obey him."
+      ]
+    }
+  },
+  "kins": {
+    "Human": {
+      "key": "empathy",
+      "talent": [
+        "Adaptive",
+        "Once per session reroll a roll for a skill you have no rank in."
+      ]
+    },
+    "Half-Elf": {
+      "key": "wits",
+      "talent": [
+        "Psychic Power",
+        "Sense thoughts and emotions; a touch of the mind's eye."
+      ]
+    },
+    "Elf": {
+      "key": "wits",
+      "talent": [
+        "Inner Peace",
+        "Heal attributes and Willpower by meditating instead of sleeping."
+      ]
+    },
+    "Dwarf": {
+      "key": "strength",
+      "talent": [
+        "True Grit",
+        "Halve the damage from falling, crushing, and exhaustion."
+      ]
+    },
+    "Halfling": {
+      "key": "agility",
+      "talent": [
+        "Hard to Catch",
+        "Reroll one die when you defend, flee, or dodge."
+      ]
+    },
+    "Goblin": {
+      "key": "agility",
+      "talent": [
+        "Nocturnal",
+        "See in the dark and thrive at night."
+      ]
+    },
+    "Orc": {
+      "key": "strength",
+      "talent": [
+        "Unbreakable",
+        "Once per session, ignore the effects of being Broken for one turn."
+      ]
+    },
+    "Wolfkin": {
+      "key": "empathy",
+      "talent": [
+        "Hunting Instincts",
+        "Reroll dice when you track or hunt in the wild."
+      ]
+    }
+  },
+  "general_talents": [
+    "Ambidextrous",
+    "Axe Fighter",
+    "Berserker",
+    "Bowyer",
+    "Brawler",
+    "Builder",
+    "Chef",
+    "Cold Blooded",
+    "Defender",
+    "Dragonslayer",
+    "Executioner",
+    "Fast Footwork",
+    "Fast Shooter",
+    "Fearless",
+    "Firm Grip",
+    "Fisher",
+    "Hammer Fighter",
+    "Herbalist",
+    "Horseback Fighter",
+    "Incorruptible",
+    "Knife Fighter",
+    "Lightning Fast",
+    "Lockpicker",
+    "Lucky",
+    "Master of the Hunt",
+    "Melee Charge",
+    "Pack Rat",
+    "Pain Resistant",
+    "Pathfinder",
+    "Poisoner",
+    "Quartermaster",
+    "Quickdraw",
+    "Sailor",
+    "Sharpshooter",
+    "Sharp Tongue",
+    "Shield Fighter",
+    "Sixth Sense",
+    "Smith",
+    "Spear Fighter",
+    "Steady Feet",
+    "Sword Fighter",
+    "Tailor",
+    "Tanner",
+    "Threatening",
+    "Throwing Arm",
+    "Wanderer"
+  ],
+  "ages": {
+    "Young": {
+      "attribute_points": 15,
+      "skill_points": 8,
+      "general_talents": 1
+    },
+    "Adult": {
+      "attribute_points": 14,
+      "skill_points": 10,
+      "general_talents": 2
+    },
+    "Old": {
+      "attribute_points": 13,
+      "skill_points": 12,
+      "general_talents": 3
+    }
+  },
+  "skills": [
+    "might",
+    "endurance",
+    "melee",
+    "crafting",
+    "move",
+    "stealth",
+    "sleight of hand",
+    "marksmanship",
+    "scouting",
+    "lore",
+    "survival",
+    "insight",
+    "manipulation",
+    "performance",
+    "healing",
+    "animal handling"
+  ],
+  "names": {
+    "Human": [
+      "Aric",
+      "Brena",
+      "Halvard",
+      "Sanna",
+      "Corvin",
+      "Dela"
+    ],
+    "Half-Elf": [
+      "Aelin",
+      "Coren",
+      "Mirae",
+      "Sael"
+    ],
+    "Elf": [
+      "Aelith",
+      "Faeron",
+      "Lirael",
+      "Sylwen",
+      "Thandor",
+      "Yrsa"
+    ],
+    "Dwarf": [
+      "Brokk",
+      "Dwalla",
+      "Grimhild",
+      "Korin",
+      "Thrudd",
+      "Vali"
+    ],
+    "Halfling": [
+      "Bodo",
+      "Pim",
+      "Rilla",
+      "Tobble",
+      "Wren",
+      "Posy"
+    ],
+    "Goblin": [
+      "Skib",
+      "Nix",
+      "Grut",
+      "Yips",
+      "Hagga",
+      "Murl"
+    ],
+    "Orc": [
+      "Gorm",
+      "Ushka",
+      "Brakka",
+      "Drogh",
+      "Mara",
+      "Thokk"
+    ],
+    "Wolfkin": [
+      "Fenra",
+      "Greymaw",
+      "Skoll",
+      "Hati",
+      "Varg",
+      "Yula"
+    ]
+  },
+  "skill_attr": {
+    "might": "strength",
+    "endurance": "strength",
+    "melee": "strength",
+    "crafting": "strength",
+    "move": "agility",
+    "stealth": "agility",
+    "sleight of hand": "agility",
+    "marksmanship": "agility",
+    "scouting": "wits",
+    "lore": "wits",
+    "survival": "wits",
+    "insight": "wits",
+    "manipulation": "empathy",
+    "performance": "empathy",
+    "healing": "empathy",
+    "animal handling": "empathy"
+  },
+  "_source": "Forbidden Lands Player's Handbook 5th printing (real Pride/Dark Secret/skills/talents/age rules)"
+}

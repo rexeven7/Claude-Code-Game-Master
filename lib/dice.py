@@ -229,6 +229,25 @@ def roll_formatted(notation: str) -> str:
     return _roller.format_result(_roller.roll(notation))
 
 
+
+def score_faces(base=None, skill=None, gear=None, negative=None, pushed=False):
+    """Score a Year Zero pool from MANUALLY ENTERED faces (player rolled physical dice).
+
+    base/skill/gear/negative are lists of d6 faces (1-6) the player typed in. Returns the
+    same dict shape as roll_pool(): successes, success, *_banes, willpower, etc. This powers
+    the app's "tell me what to roll, I enter the results" mode (no auto-rolling)."""
+    state = {
+        'type': 'yze-pool', 'pushed': bool(pushed),
+        'base': [int(x) for x in (base or [])],
+        'skill': [int(x) for x in (skill or [])],
+        'gear': [int(x) for x in (gear or [])],
+        'negative': [int(x) for x in (negative or [])],
+        'artifact': [],
+        'pool_size': len(base or []) + len(skill or []) + len(gear or []),
+    }
+    return _score_pool(state)
+
+
 def _strip(state):
     return {k: state[k] for k in ('pushed', 'base', 'skill', 'gear', 'negative', 'artifact',
             'successes', 'success', 'attribute_banes', 'gear_banes', 'willpower',

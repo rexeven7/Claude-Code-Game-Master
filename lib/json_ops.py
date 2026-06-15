@@ -71,20 +71,24 @@ class JsonOperations:
         filepath = self._resolve_path(filename)
 
         try:
-            # Write to temp file first for atomic operation
-            temp_path = filepath.with_suffix('.tmp')
-            with open(temp_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=indent, ensure_ascii=False)
-
-            # Atomic rename
-            temp_path.replace(filepath)
+            # UNIQUE temp per write -> concurrency-safe. Parallel writers (Claude Code's
+            # batched tool calls, or the app running alongside it) never share a temp name,
+            # so a race can at worst lose an update, never truncate the file. Then atomic rename.
+            import os as _os, tempfile as _tf
+            _dir = _os.path.dirname(str(filepath)) or "."
+            _fd, _tmp = _tf.mkstemp(dir=_dir, suffix=".tmp")
+            try:
+                with _os.fdopen(_fd, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=indent, ensure_ascii=False)
+                    f.flush(); _os.fsync(f.fileno())
+                _os.replace(_tmp, str(filepath))
+            except Exception:
+                try: _os.unlink(_tmp)
+                except OSError: pass
+                raise
             return True
         except Exception as e:
             print(f"[ERROR] Failed to save {filename}: {e}")
-            # Clean up temp file if it exists
-            temp_path = filepath.with_suffix('.tmp')
-            if temp_path.exists():
-                temp_path.unlink()
             return False
 
     def update_json(self, filename: str, updates: Dict, path: List[str] = None) -> bool:

@@ -1,0 +1,10 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+websockets>=12
+httpx>=0.27
+pydantic>=2
+anthropic>=0.40        # Claude GM provider (needs ANTHROPIC_API_KEY)
+# ollama>=0.3          # optional: free/local GM provider
+
+python-dotenv>=1.0
+requests>=2.31

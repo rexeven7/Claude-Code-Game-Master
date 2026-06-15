@@ -34,6 +34,9 @@ source-material/*
 .env.*.local
 *.key
 *.pem
+.env.*
+!.env.example
+!**/.env.example
 
 # Claude Code Local Settings
 .claude/settings.local.json
@@ -84,7 +87,26 @@ docs/production/
 world-state/campaigns/*/source-material/
 source-material/*.txt
 **/current-document.txt
-index.html
+
+# extracted book content (not app source)
+world-state/campaigns/**/index.html
+source-material/**/index.html
 
 # Remotion demo video (local build workspace — entire folder ignored)
 video/
+
+# Node / React / Vite (app/frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite / TypeScript build artifacts
+*.tsbuildinfo
+.vite/
+
+# Python lint cache
+.ruff_cache/
+# Tauri (future)
+app/frontend/src-tauri/target/

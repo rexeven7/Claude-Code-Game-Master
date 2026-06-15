@@ -1,0 +1,495 @@
+{
+  "_source": "Forbidden Lands GM's Guide + Book of Beasts (user PDFs)",
+  "monster_roster": [
+    {
+      "code": "11",
+      "name": "Amphibian"
+    },
+    {
+      "code": "14",
+      "name": "Basilisk"
+    },
+    {
+      "code": "15",
+      "name": "Bog Man"
+    },
+    {
+      "code": "16",
+      "name": "Dread Raptor"
+    },
+    {
+      "code": "23",
+      "name": "Giant Specter"
+    },
+    {
+      "code": "24",
+      "name": "Giant Spider, Hatchling"
+    },
+    {
+      "code": "25",
+      "name": "Giant Spider, Adult Male"
+    },
+    {
+      "code": "26",
+      "name": "Giant Spider, Elder Female"
+    },
+    {
+      "code": "31",
+      "name": "Greater golem"
+    },
+    {
+      "code": "35",
+      "name": "Iron Dragon"
+    },
+    {
+      "code": "42",
+      "name": "Mire Drake"
+    },
+    {
+      "code": "43",
+      "name": "Mummy"
+    },
+    {
+      "code": "44",
+      "name": "Nature Spirit"
+    },
+    {
+      "code": "45",
+      "name": "Possessor"
+    },
+    {
+      "code": "46",
+      "name": "Rat King"
+    },
+    {
+      "code": "51",
+      "name": "Rock Troll"
+    },
+    {
+      "code": "52",
+      "name": "Shapeshifter"
+    },
+    {
+      "code": "53",
+      "name": "Skolopendra"
+    },
+    {
+      "code": "54",
+      "name": "The Swarming Death"
+    },
+    {
+      "code": "55",
+      "name": "Tupilaq"
+    },
+    {
+      "code": "56",
+      "name": "Twisted Ent"
+    },
+    {
+      "code": "61",
+      "name": "Undead Dragon"
+    },
+    {
+      "code": "62",
+      "name": "Vampyr"
+    },
+    {
+      "code": "63",
+      "name": "Water Troll"
+    },
+    {
+      "code": "66",
+      "name": "Wolfshadow"
+    }
+  ],
+  "demon_form": [
+    {
+      "code": "11-24",
+      "form": "Humanoid",
+      "str": "D6+3",
+      "agi": 3,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "25-26",
+      "form": "Minotaur",
+      "str": "D6+5",
+      "agi": 3,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "31-32",
+      "form": "Goat",
+      "str": "D6+3",
+      "agi": 4,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "33-34",
+      "form": "Bear",
+      "str": "D6+6",
+      "agi": 3,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "35-36",
+      "form": "Snake",
+      "str": "D6+4",
+      "agi": 4,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "41-42",
+      "form": "Undead",
+      "str": "D6+3",
+      "agi": 3,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "43-44",
+      "form": "Spider",
+      "str": "D6+5",
+      "agi": 4,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "45-46",
+      "form": "Serpent",
+      "str": "D6+3",
+      "agi": 4,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "51-52",
+      "form": "Wolf",
+      "str": "D6+4",
+      "agi": 4,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "53-54",
+      "form": "Insect",
+      "str": "D6+2",
+      "agi": 3,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "55-56",
+      "form": "Wolfkin",
+      "str": "D6+4",
+      "agi": 4,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "61-62",
+      "form": "Giant Crab",
+      "str": "D6+5",
+      "agi": 2,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6+3",
+      "effect": "—"
+    },
+    {
+      "code": "63",
+      "form": "Giant Toad",
+      "str": "D6+5",
+      "agi": 2,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "—"
+    },
+    {
+      "code": "64",
+      "form": "Squid",
+      "str": "D6+4",
+      "agi": 2,
+      "wits": 3,
+      "emp": 3,
+      "armor": "D6",
+      "effect": "RUN is a slow action on land."
+    },
+    {
+      "code": "65",
+      "form": "Fog",
+      "str": "D6+3",
+      "agi": 3,
+      "wits": 3,
+      "emp": 3,
+      "armor": "—",
+      "effect": "Not hurt by physical weapons."
+    },
+    {
+      "code": "66",
+      "form": "Shadow",
+      "str": "D6+3",
+      "agi": 3,
+      "wits": 3,
+      "emp": 3,
+      "armor": "—",
+      "effect": "Not hurt by physical weapons. chapter5 B eS tIarY Robert Taylor (Order #41500780)"
+    }
+  ],
+  "demon_ability": [
+    {
+      "code": "11-12",
+      "text": "Stoneskin Armor Rating +6"
+    },
+    {
+      "code": "13-14",
+      "text": "Giant Strength +2D6"
+    },
+    {
+      "code": "15-16",
+      "text": "Burning Body Immune to fire."
+    },
+    {
+      "code": "21-22",
+      "text": "Made of Ice Armor Rating +2"
+    },
+    {
+      "code": "23-24",
+      "text": "Mummified Fear attack D6+5"
+    },
+    {
+      "code": "25-26",
+      "text": "Slimy Can move through very small openings."
+    },
+    {
+      "code": "31-32",
+      "text": "Unnaturally Beautiful +2 Manipulation"
+    },
+    {
+      "code": "33-34",
+      "text": "Covered by Sores Infectious Touch, Virulence D6+5"
+    },
+    {
+      "code": "35-36",
+      "text": "Feathers Armor Rating +2"
+    },
+    {
+      "code": "41-43",
+      "text": "Wings Can fly, Movement Rating 3"
+    },
+    {
+      "code": "44-45",
+      "text": "Filled by Light Fear attack D6+5"
+    },
+    {
+      "code": "46",
+      "text": "Covered in Vines Armor Rating +3"
+    },
+    {
+      "code": "51-53",
+      "text": "Transparent All attacks get a −3 penalty"
+    },
+    {
+      "code": "54",
+      "text": "Covered by Eyes Draw one extra initiative card, discard the worst one."
+    },
+    {
+      "code": "55",
+      "text": "No Eyes Draw one extra initiative card, discard the best one."
+    },
+    {
+      "code": "56-66",
+      "text": "Roll Twice —"
+    }
+  ],
+  "demon_attack": [
+    {
+      "code": "11-15",
+      "text": "Claws D6+4 Roll a D6. 1-2: Damage 1, 3-5: Arm's Length Damage 2, 6: Damage 3"
+    },
+    {
+      "code": "16-22",
+      "text": "Teeth D6+5 Roll a D6. 1-2: Damage 1, 3-5: Arm's Length Damage 2, 6: Damage 3"
+    },
+    {
+      "code": "23-26",
+      "text": "Horn D6+6 Roll a D6. 1-4: Damage 2, 5-6: Arm's Length Damage 3"
+    },
+    {
+      "code": "26-32",
+      "text": "Tentacles D6+4 Roll a D6. 1-2: Damage 1, 3-6: Near Damage 2. Then GRAPPLED chapter5 B eS tIarY Robert Taylor (Order #41500780)"
+    },
+    {
+      "code": "33-35",
+      "text": "Fire D6+6 The victim continues to take 1 Near point of damage every round until the fire is put out with a MOVE roll."
+    },
+    {
+      "code": "36-41",
+      "text": "Cold D6+5 The victim also instantly becomes Near COLD."
+    },
+    {
+      "code": "42-45",
+      "text": "Roar — Fear attack: strength D3+6 Near"
+    },
+    {
+      "code": "46-51",
+      "text": "Killing — Fear attack: strength D6+5 Near Gaze"
+    },
+    {
+      "code": "52-55",
+      "text": "Heavy D6+5 Roll a D6. 1: Longsword, 2: Two- Arm's Length Weapon handed sword, 3: Heavy warham- mer, 4: Morningstar, 5: Two- handed axe, 6: Trident"
+    },
+    {
+      "code": "61-65",
+      "text": "Roll — — — Three Times"
+    },
+    {
+      "code": "66",
+      "text": "Roll Four — — — Times"
+    }
+  ],
+  "demon_strength": [
+    {
+      "code": "11-14",
+      "text": "Immune to weapons Only unarmed attacks and spells can hurt the demon."
+    },
+    {
+      "code": "15-22",
+      "text": "Immune to fire Cannot be hurt by fire."
+    },
+    {
+      "code": "23-25",
+      "text": "Immune to cold Cold has no effect."
+    },
+    {
+      "code": "26-32",
+      "text": "Lightning fast Draws two initiative cards and gets to act on both turns."
+    },
+    {
+      "code": "33-34",
+      "text": "Immune to physical Physical attacks are ineffective. attacks"
+    },
+    {
+      "code": "35-36",
+      "text": "Parasite By touching its victim, the demon can take control over it. This works as the PUPPETEER spell with Power Level 3."
+    },
+    {
+      "code": "41-43",
+      "text": "Regenerative Regains D3 Strength every round. chapter5 B eS tIarY Robert Taylor (Order #41500780)"
+    },
+    {
+      "code": "44-45",
+      "text": "Paralyzing A victim touched by the demon is affected by a paralyzing poison with Potency D6+5."
+    },
+    {
+      "code": "46-51",
+      "text": "Poisonous A victim touched by the demon is affected by a lethal poison with Potency D6+5."
+    },
+    {
+      "code": "52-54",
+      "text": "Shapeshifter Can change shape into any creature. The copy is perfect except for one small detail (such as eye color)."
+    },
+    {
+      "code": "55-56",
+      "text": "Immaterial Can move through solid matter."
+    },
+    {
+      "code": "61-62",
+      "text": "Floating Does not touch the ground. Can float up to"
+    },
+    {
+      "code": "10",
+      "text": "meters from the ground."
+    },
+    {
+      "code": "63-64",
+      "text": "Teleportation Can instantly teleport to anywhere within LONG range every other round."
+    },
+    {
+      "code": "65-66",
+      "text": "Roll twice on this table —"
+    }
+  ],
+  "demon_weakness": [
+    {
+      "code": "11-13",
+      "text": "Water Suffers D3 damage when splashed by water."
+    },
+    {
+      "code": "14-15",
+      "text": "Fire Takes double damage from fire."
+    },
+    {
+      "code": "16-21",
+      "text": "Cold Takes double damage from cold."
+    },
+    {
+      "code": "22-24",
+      "text": "Light Sensitive to light and must move away from strong light sources. If not possible, takes D3 damage from a minor light source (such as a torch) and D6 damage from a major light source (such as the sun) every round."
+    },
+    {
+      "code": "25-31",
+      "text": "Silver Takes double damage from weapons made of silver."
+    },
+    {
+      "code": "32-33",
+      "text": "Gold Takes double damage from weapons made of gold."
+    },
+    {
+      "code": "34-35",
+      "text": "Children Cannot stand the sight of children and must move away from them. If unable to do so, the demon takes D3 damage every round."
+    },
+    {
+      "code": "36-41",
+      "text": "Elves Cannot stand the sight of elves and must move away from them. If unable to do so, the demon takes D3 damage every round. chapter5 B eS tIarY Robert Taylor (Order #41500780)"
+    },
+    {
+      "code": "42-43",
+      "text": "Dwarves Cannot stand the sight of dwarves and must move away from them. If unable to do so, the demon takes D3 damage every round."
+    },
+    {
+      "code": "44-52",
+      "text": "Holy Cannot stand the sight of holy symbols and must move Symbols away from them. If unable to do so, the demon takes D3 damage every round."
+    },
+    {
+      "code": "53-56",
+      "text": "Music Cannot stand the sound of music or melodies and must move away from the sound. If unable to do so, the demon takes D3 damage every round."
+    },
+    {
+      "code": "61-63",
+      "text": "Soil Takes D3 damage from contact with soil."
+    },
+    {
+      "code": "64-66",
+      "text": "Wood Takes double damage from weapons made of wood."
+    }
+  ]
+}
