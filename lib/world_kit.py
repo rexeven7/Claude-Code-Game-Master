@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from json_ops import JsonOperations
 from campaign_manager import CampaignManager
-from game_core import make_progression, resolve_check
+from game_core import make_progression, resolve_check, resolve_pool
 
 
 DEFAULT_RULESET = {
@@ -87,7 +87,17 @@ class WorldKit:
         return overview.get("campaign_rules", {})
 
     # --- play, driven through the generic core ---
-    def resolve(self, modifier: int = 0, dc: int = 10, advantage: str = None) -> Dict[str, Any]:
+    def resolve(self, modifier: int = 0, dc: int = 10, advantage: str = None,
+                base: int = 0, skill: int = 0, gear: int = 0,
+                artifact=None, negative: int = 0, push: bool = False) -> Dict[str, Any]:
+        """Resolve a check through the kit's declared resolution model.
+
+        d20-vs-dc kits use modifier/dc/advantage (unchanged). yze-pool kits
+        (Forbidden Lands) use base/skill/gear/modifier and may push. Default
+        stays d20-vs-dc so existing kits are unaffected."""
+        if self.resolution_model() == "yze-pool":
+            return resolve_pool(base=base, skill=skill, gear=gear, modifier=modifier,
+                                artifact=artifact, negative=negative, push=push)
         return resolve_check(modifier, dc, advantage)
 
     def advance_progression(self, state: Dict[str, Any], **kw) -> Dict[str, Any]:

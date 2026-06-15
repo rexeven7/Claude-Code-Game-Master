@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from dice import DiceRoller
+from dice import DiceRoller, roll_pool, push_pool
 
 _roller = DiceRoller()
 
@@ -64,6 +64,29 @@ def opposed_check(modifier_a: int = 0, modifier_b: int = 0,
     else:
         winner = 'tie'
     return {'a': a['total'], 'b': b['total'], 'winner': winner, 'margin': abs(a['total'] - b['total'])}
+
+
+def resolve_pool(base: int = 0, skill: int = 0, gear: int = 0, modifier: int = 0,
+                 artifact: Optional[List[int]] = None, negative: int = 0,
+                 push: bool = False) -> Dict[str, Any]:
+    """Resolve a Year Zero Engine dice-pool check (Forbidden Lands and other YZE kits).
+
+    The pool is base (attribute) + skill + gear d6; a 6 is a success. `modifier`
+    adjusts SKILL dice only (FBL difficulty ladder / help): +N adds skill dice,
+    -N removes them, and any shortfall below zero is rolled as negative dice that
+    cancel successes. Set push=True to immediately push once (banes then activate,
+    inflicting attribute/gear damage and granting Willpower). Returns the pool
+    state dict from dice.roll_pool (successes, success, *_banes, willpower, ...).
+    """
+    skill_eff = skill + modifier
+    neg = max(0, negative)
+    if skill_eff < 0:
+        neg += -skill_eff
+        skill_eff = 0
+    state = roll_pool(base=base, skill=skill_eff, gear=gear, artifact=artifact, negative=neg)
+    if push:
+        state = push_pool(state)
+    return state
 
 
 # ---------------------------------------------------------------- harm / conditions

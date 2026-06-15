@@ -1,20 +1,13 @@
 #!/usr/bin/env bash
-# gm-statusline.sh - Always-on game HUD for the AI Game Master.
+# gm-statusline.sh - Forbidden Lands HUD for Claude Code.
 #
-# Auto-derives a 3-line heads-up display from the active campaign's state
-# files (character.json + campaign-overview.json). The agent does NOTHING
-# extra: these files are already persisted every turn per the golden rule,
-# and Claude Code re-runs this script after every assistant message.
-#
-# Wired via the project's .claude/settings.json `statusLine` setting, so it
-# only overrides the global status line inside this repo.
+# Shows four FL attribute bars (STR/AGI/WIT/EMP), conditions, AR, WP, XP, and
+# world time. Uses Python for JSON parsing (jq not required).
 
-input=$(cat)  # Claude Code JSON payload on stdin (unused; we read state files)
+input=$(cat)   # Claude Code JSON payload on stdin (unused)
 
-# Anchor to repo root via this script's location, not cwd.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# 256-color palette (kept light: docs warn multi-line + heavy ANSI can glitch)
 GREEN=$'\033[38;5;42m'
 AMBER=$'\033[38;5;214m'
 RED=$'\033[38;5;203m'
@@ -24,15 +17,9 @@ DIM=$'\033[38;5;244m'
 FAINT=$'\033[38;5;238m'
 BOLD=$'\033[1m'
 RESET=$'\033[0m'
-SEP="${DIM}·${RESET}"
-SEPV="${FAINT}│${RESET}"   # vertical segment separator for the vitals line
+SEP="${DIM}*${RESET}"
+SEPV="${FAINT}|${RESET}"
 
-# Horizontal rule that frames the HUD (drawn both above and below it) to set it
-# apart from the conversation above and the input/permissions area below. Width
-# auto-detects the terminal; falls back to 80 when stdout is not a tty (the usual
-# case for a status-line subprocess). Args let the rule react to danger state:
-#   divider [rule_color] [ornament_color]
-# Defaults are a calm faint rule with a teal ornament.
 divider() {
     local rule="${1:-$FAINT}" orn="${2:-$TEAL}"
     local cols mid half left right
@@ -40,106 +27,188 @@ divider() {
     case "$cols" in ''|*[!0-9]*) cols=80 ;; esac
     [ "$cols" -gt 120 ] && cols=120
     [ "$cols" -lt 24  ] && cols=24
-    mid="◆"                                  # single-width ornament (no wrap)
+    mid="+"
     half=$(( (cols - 1) / 2 ))
-    printf -v left  '%*s' "$half" '';            left="${left// /─}"
-    printf -v right '%*s' "$(( cols - 1 - half ))" ''; right="${right// /─}"
+    printf -v left  '%*s' "$half" '';            left="${left// /-}"
+    printf -v right '%*s' "$(( cols - 1 - half ))" ''; right="${right// /-}"
     printf '%s%s%s%s%s%s%s\n' "$rule" "$left" "$orn" "$mid" "$rule" "$right" "$RESET"
 }
 
 ACTIVE_FILE="$ROOT/world-state/active-campaign.txt"
 if [ ! -f "$ACTIVE_FILE" ] || [ ! -s "$ACTIVE_FILE" ]; then
     divider
-    printf '%s⚔ %sGM%s  %sno campaign yet%s  %s  %s%s/gm%s %sto begin — import a book, build a world, or jump into a one-shot%s\n' \
-        "$TEAL" "$BOLD" "$RESET" "$DIM" "$RESET" "$SEP" "$BOLD" "$TEAL" "$RESET" "$DIM" "$RESET"
+    printf '%s[GM]%s  %sno campaign%s  %s  type %s/gm%s to begin\n' \
+        "$TEAL$BOLD" "$RESET" "$DIM" "$RESET" "$SEP" "$TEAL$BOLD" "$RESET"
     divider
     exit 0
 fi
 ACTIVE=$(tr -d '[:space:]' < "$ACTIVE_FILE")
-
 CAMP="$ROOT/world-state/campaigns/$ACTIVE"
 CHAR="$CAMP/character.json"
 OVER="$CAMP/campaign-overview.json"
 
 if [ ! -f "$CHAR" ]; then
     divider
-    printf '%s⚔ %sGM%s  %s%s%s  %sno character yet%s  %s  %s%s/gm%s %sto begin — "who are you in this world?"%s\n' \
-        "$TEAL" "$BOLD" "$RESET" "$BOLD" "$ACTIVE" "$RESET" "$DIM" "$RESET" "$SEP" "$BOLD" "$TEAL" "$RESET" "$DIM" "$RESET"
+    printf '%s[GM]%s  %s%s%s  %sno character%s  %s  type %s/gm%s to begin\n' \
+        "$TEAL$BOLD" "$RESET" "$BOLD" "$ACTIVE" "$RESET" "$DIM" "$RESET" "$SEP" "$TEAL$BOLD" "$RESET"
     divider
     exit 0
 fi
 
-# --- Character fields -------------------------------------------------------
-IFS=$'\t' read -r NAME RACE CLASS LEVEL AC GP HP_CUR HP_MAX XP_CUR XP_NEXT LOC < <(
-    jq -r '
-      [ (.name // .identity.name // "?"),
-        (.race // .identity.race // "?"),
-        (.class // .identity.class // "?"),
-        (.level // .progression.level // 1),
-        (.ac // .vitals.ac // "?"),
-        (.gold // .inventory.gold // 0),
-        (.hp.current // .vitals.hp.current // .hp // 0),
-        (.hp.max // .vitals.hp.max // .hp // 0),
-        (.xp.current // .progression.xp.current // .xp // 0),
-        (.xp.next_level // .progression.xp.next_level // 0),
-        (.current_location // .details.current_location // "?")
-      ] | @tsv' "$CHAR"
+# Parse character + overview with Python (no jq needed)
+PARSE=$(PYTHONIOENCODING=utf-8 uv run python3 - "$CHAR" "$OVER" 2>/dev/null <<'PYEOF'
+import json, sys
+
+char_f = sys.argv[1]
+over_f = sys.argv[2] if len(sys.argv) > 2 else None
+
+with open(char_f, encoding='utf-8') as f:
+    c = json.load(f)
+
+attr = c.get('attributes', {})
+str_max = int(attr.get('strength', c.get('stats', {}).get('str', 2)))
+agi_max = int(attr.get('agility', c.get('stats', {}).get('dex', 4)))
+wit_max = int(attr.get('wits', c.get('stats', {}).get('con', 5)))
+emp_max = int(attr.get('empathy', c.get('stats', {}).get('cha', 3)))
+
+# Current values — fall back to max if not tracked separately
+cur = c.get('current_attributes', {})
+str_cur = int(cur.get('strength', str_max))
+agi_cur = int(cur.get('agility', agi_max))
+wit_cur = int(cur.get('wits', wit_max))
+emp_cur = int(cur.get('empathy', emp_max))
+
+# If hp.max matches str_max, use hp.current as live STR (legacy compat)
+hp = c.get('hp', {})
+if isinstance(hp, dict) and int(hp.get('max', -1)) == str_max:
+    str_cur = int(hp.get('current', str_cur))
+
+wp = c.get('willpower', {})
+wp_cur = int(wp.get('current', 0)) if isinstance(wp, dict) else 0
+wp_max = int(wp.get('max', 10)) if isinstance(wp, dict) else 10
+
+gold = int(c.get('gold', 0))
+xp_val = c.get('xp', {})
+xp_cur = int(xp_val.get('current', 0)) if isinstance(xp_val, dict) else 0
+
+ar = int(c.get('ac', 0))
+name = c.get('name', '?')
+race = c.get('race', '?')
+cls  = c.get('class', '?')
+
+conds_raw = [x.lower() for x in c.get('conditions', [])]
+hungry  = 'X' if 'hungry'  in conds_raw else '_'
+thirsty = 'X' if 'thirsty' in conds_raw else '_'
+sleepy  = 'X' if 'sleepy'  in conds_raw else '_'
+cold    = 'X' if 'cold'    in conds_raw else '_'
+
+loc = '?'; date = ''; tod = ''
+if over_f:
+    try:
+        with open(over_f, encoding='utf-8') as f:
+            o = json.load(f)
+        date = o.get('current_date', '')
+        tod  = o.get('time_of_day', '')
+        oloc = o.get('player_position', {}).get('current_location', '')
+        if oloc: loc = oloc
+    except Exception:
+        pass
+
+print('\t'.join(str(x) for x in [
+    name, race, cls,
+    str_cur, str_max, agi_cur, agi_max, wit_cur, wit_max, emp_cur, emp_max,
+    wp_cur, wp_max, ar, gold, xp_cur,
+    hungry, thirsty, sleepy, cold,
+    loc, date, tod
+]))
+PYEOF
 )
 
-# Conditions array -> status label; fall back to HP-derived state.
-CONDS=$(jq -r '(.conditions // []) | map(ascii_downcase) | join(", ")' "$CHAR" 2>/dev/null)
-
-# --- Overview fields (location/time/date) -----------------------------------
-DATE="" ; TOD="" ; OLOC=""
-if [ -f "$OVER" ]; then
-    IFS=$'\t' read -r DATE TOD OLOC < <(
-        jq -r '[ (.current_date // ""), (.time_of_day // ""), (.player_position.current_location // "") ] | @tsv' "$OVER"
-    )
+if [ -z "$PARSE" ]; then
+    divider
+    printf '%s[GM]%s  %s%s%s  %sparse error%s\n' \
+        "$TEAL$BOLD" "$RESET" "$BOLD" "$ACTIVE" "$RESET" "$RED" "$RESET"
+    divider
+    exit 0
 fi
-# Prefer overview's live location if present.
-[ -n "$OLOC" ] && LOC="$OLOC"
 
-# --- HP bar -----------------------------------------------------------------
-BAR_W=10
-if [ "$HP_MAX" -gt 0 ] 2>/dev/null; then
-    PCT=$(( HP_CUR * 100 / HP_MAX ))
-    FILLED=$(( HP_CUR * BAR_W / HP_MAX ))
-else
-    PCT=0 ; FILLED=0
-fi
-[ "$FILLED" -gt "$BAR_W" ] && FILLED=$BAR_W
-[ "$FILLED" -lt 0 ] && FILLED=0
-EMPTY=$(( BAR_W - FILLED ))
+IFS=$'\t' read -r NAME RACE CLASS \
+    STR_CUR STR_MAX AGI_CUR AGI_MAX WIT_CUR WIT_MAX EMP_CUR EMP_MAX \
+    WP_CUR WP_MAX AR GP XP \
+    HUNGRY THIRSTY SLEEPY COLD \
+    LOC DATE TOD <<< "$PARSE"
 
-# HP state drives the bar color AND the frame: calm when healthy, amber when
-# wounded, a bold red glow when critical.
-if   [ "$PCT" -ge 50 ]; then HPC="$GREEN"; STATE="Normal";   RULEC="$FAINT";        ORNC="$TEAL";          STATEC="$DIM"
-elif [ "$PCT" -ge 25 ]; then HPC="$AMBER"; STATE="Wounded";  RULEC="$AMBER";        ORNC="$AMBER";         STATEC="$AMBER"
-else                         HPC="$RED";   STATE="Critical"; RULEC="${BOLD}${RED}"; ORNC="${BOLD}${RED}";  STATEC="${BOLD}${RED}"
-fi
-# A named condition (poisoned, etc.) overrides the label but keeps the HP color.
-[ -n "$CONDS" ] && { STATE="$CONDS"; [ "$PCT" -ge 50 ] && STATEC="$AMBER"; }
+# Build attribute bar (filled=█ empty=░, length = attribute max)
+make_bar() {
+    local cur=$1 max=$2 bar="" i
+    local filled=$(printf '\xe2\x96\x88')  # █
+    local empty=$(printf '\xe2\x96\x91')   # ░
+    for ((i=1; i<=max; i++)); do
+        if [ "$i" -le "$cur" ] 2>/dev/null; then bar="${bar}${filled}"; else bar="${bar}${empty}"; fi
+    done
+    printf '%s' "$bar"
+}
 
-BAR=""
-[ "$FILLED" -gt 0 ] && printf -v F "%${FILLED}s" && BAR="${F// /█}"
-[ "$EMPTY"  -gt 0 ] && printf -v E "%${EMPTY}s"  && BAR="${BAR}${E// /░}"
+# Attribute color: green=full, amber=damaged, red=broken
+attr_color() {
+    local cur=$1 max=$2
+    if   [ "$cur" -le 0 ] 2>/dev/null;                                 then printf '%s' "$RED"
+    elif [ "$cur" -lt "$max" ] 2>/dev/null;                            then printf '%s' "$AMBER"
+    else                                                                     printf '%s' "$GREEN"
+    fi
+}
 
-# --- Render (3 lines) -------------------------------------------------------
-# Build each line as a string, then emit. Clearer than one packed printf.
+# Frame color: red if anything broken, amber if anything damaged, calm otherwise
+RULEC="$FAINT"; ORNC="$TEAL"
+for pair in "$STR_CUR:$STR_MAX" "$AGI_CUR:$AGI_MAX" "$WIT_CUR:$WIT_MAX" "$EMP_CUR:$EMP_MAX"; do
+    cur="${pair%%:*}"; max="${pair##*:}"
+    [ "$cur" -le 0 ] 2>/dev/null && { RULEC="${BOLD}${RED}"; ORNC="${BOLD}${RED}"; break; }
+    [ "$cur" -lt "$max" ] 2>/dev/null && { RULEC="$AMBER"; ORNC="$AMBER"; }
+done
 
-L1="${TEAL}⚔ ${BOLD}${NAME}${RESET}  ${DIM}Lv${LEVEL} ${RACE} ${CLASS}${RESET}  ${SEP}  ${AMBER}${LOC}${RESET}"
-L2="  HP ${HPC}${BAR}${RESET} ${HP_CUR}/${HP_MAX} ${SEPV} ${DIM}AC${RESET} ${AC} ${SEPV} ${GOLD}${GP}gp${RESET} ${SEPV} ${DIM}XP${RESET} ${XP_CUR}/${XP_NEXT} ${SEPV} ${STATEC}${STATE}${RESET}"
+# Condition display: [_] inactive, [X] active
+cond_str="[${HUNGRY}]Hungry [${THIRSTY}]Thirsty [${SLEEPY}]Sleepy [${COLD}]Cold"
+[ "$HUNGRY$THIRSTY$SLEEPY$COLD" != "____" ] && COND_COLOR="$AMBER" || COND_COLOR="$DIM"
 
-# Top rule — frames the HUD off from the conversation above.
+# --- Render ---
 divider "$RULEC" "$ORNC"
 
-printf '%s\n' "$L1"
-printf '%s\n' "$L2"
+# Line 1: identity + location
+printf '%s[%s]%s  %s%s%s  %s%s %s%s  %s  %s%s%s\n' \
+    "$TEAL$BOLD" "GM" "$RESET" \
+    "$BOLD" "$NAME" "$RESET" \
+    "$DIM" "$RACE" "$CLASS" "$RESET" \
+    "$SEP" \
+    "$AMBER" "$LOC" "$RESET"
 
-# Line 3: world clock (only if we have it)
+# Line 2: attribute bars
+SC=$(attr_color "$STR_CUR" "$STR_MAX"); SB=$(make_bar "$STR_CUR" "$STR_MAX")
+AC=$(attr_color "$AGI_CUR" "$AGI_MAX"); AB=$(make_bar "$AGI_CUR" "$AGI_MAX")
+WC=$(attr_color "$WIT_CUR" "$WIT_MAX"); WB=$(make_bar "$WIT_CUR" "$WIT_MAX")
+EC=$(attr_color "$EMP_CUR" "$EMP_MAX"); EB=$(make_bar "$EMP_CUR" "$EMP_MAX")
+
+printf '  %sSTR%s %s%s%s %s/%s  %sAGI%s %s%s%s %s/%s  %sWIT%s %s%s%s %s/%s  %sEMP%s %s%s%s %s/%s  %s  %sAR%s %s  %s  %sWP%s %s/%s  %s  %s%sgp%s  %s  %sXP%s %s\n' \
+    "$DIM" "$RESET" "$SC" "$SB" "$RESET" "$STR_CUR" "$STR_MAX" \
+    "$DIM" "$RESET" "$AC" "$AB" "$RESET" "$AGI_CUR" "$AGI_MAX" \
+    "$DIM" "$RESET" "$WC" "$WB" "$RESET" "$WIT_CUR" "$WIT_MAX" \
+    "$DIM" "$RESET" "$EC" "$EB" "$RESET" "$EMP_CUR" "$EMP_MAX" \
+    "$SEPV" \
+    "$DIM" "$RESET" "$AR" \
+    "$SEPV" \
+    "$DIM" "$RESET" "$WP_CUR" "$WP_MAX" \
+    "$SEPV" \
+    "$GOLD" "$GP" "$RESET" \
+    "$SEPV" \
+    "$DIM" "$RESET" "$XP"
+
+# Line 3: conditions + world time
 if [ -n "$DATE" ] || [ -n "$TOD" ]; then
-    printf '  %s%s %s %s%s\n' "$DIM" "$DATE" "$SEP" "$TOD" "$RESET"
+    printf '  %s%s%s  %s  %s%s %s %s%s\n' \
+        "$COND_COLOR" "$cond_str" "$RESET" \
+        "$SEP" \
+        "$DIM" "$TOD" "$SEP" "$DATE" "$RESET"
+else
+    printf '  %s%s%s\n' "$COND_COLOR" "$cond_str" "$RESET"
 fi
 
-# Closing rule — separates the HUD from the input / permissions area below.
 divider "$RULEC" "$ORNC"
