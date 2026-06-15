@@ -10,6 +10,9 @@ exist. These helpers seed real overview content and null a dangling pointer.
 
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_ops import atomic_write_json
 
 
 def seed_overview(campaign_dir, fields: dict = None, campaign_rules: dict = None) -> dict:
@@ -24,7 +27,7 @@ def seed_overview(campaign_dir, fields: dict = None, campaign_rules: dict = None
         overview.update(fields)
     if campaign_rules is not None:
         overview["campaign_rules"] = campaign_rules
-    path.write_text(json.dumps(overview, indent=2))
+    atomic_write_json(path, overview)
     return overview
 
 
@@ -41,7 +44,7 @@ def fix_rules_doc(campaign_dir) -> dict:
     doc = ruleset.get("rules_doc")
     if doc and not (cdir / doc).exists():
         ruleset["rules_doc"] = None
-        path.write_text(json.dumps(ruleset, indent=2))
+        atomic_write_json(path, ruleset)
         return {"rules_doc": None, "changed": True}
     return {"rules_doc": doc, "changed": False}
 
@@ -58,7 +61,7 @@ def set_rules_doc(campaign_dir, filename: str = "rules.md") -> dict:
     ruleset = json.loads(rs_path.read_text())
     changed = ruleset.get("rules_doc") != filename
     ruleset["rules_doc"] = filename
-    rs_path.write_text(json.dumps(ruleset, indent=2))
+    atomic_write_json(rs_path, ruleset)
     return {"rules_doc": filename, "changed": changed}
 
 

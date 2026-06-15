@@ -13,6 +13,9 @@ Run after cap + integrity-canonicalize, alongside missing-location-reconcile.
 import json
 import sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_ops import atomic_write_json
 
 sys.path.insert(0, str(Path(__file__).parent))
 from entity_aliases import resolve_entity_name
@@ -78,9 +81,9 @@ def run_stubs(campaign_dir) -> dict:
     npc_report = stub_missing_npcs(npcs, plots)
     tax_report = validate_plot_types(plots)
     if npcs:
-        (cdir / "npcs.json").write_text(json.dumps(npcs, indent=2))
+        atomic_write_json((cdir / "npcs.json"), npcs)
     if plots:
-        (cdir / "plots.json").write_text(json.dumps(plots, indent=2))
+        atomic_write_json((cdir / "plots.json"), plots)
     return {**npc_report, **tax_report}
 
 

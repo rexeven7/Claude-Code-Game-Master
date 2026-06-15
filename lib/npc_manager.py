@@ -33,6 +33,25 @@ PARTY_MEMBER_DEFAULTS = {
     "xp": 0
 }
 
+# FBL / Year Zero blank sheet (kit-aware promote uses this for Forbidden Lands campaigns).
+FBL_PARTY_MEMBER_DEFAULTS = {
+    "race": "Unknown", "class": "Adventurer", "level": 1,
+    "hp": {"current": 3, "max": 3},
+    "ac": 0,
+    "attributes": {"strength": 3, "agility": 3, "wits": 3, "empathy": 3},
+    "current_attributes": {"strength": 3, "agility": 3, "wits": 3, "empathy": 3},
+    "skills": {
+        "might": 0, "endurance": 0, "melee": 0, "crafting": 0,
+        "stealth": 0, "sleight_of_hand": 0, "move": 0, "marksmanship": 0,
+        "scouting": 0, "lore": 0, "survival": 0, "insight": 0,
+        "manipulation": 0, "performance": 0, "healing": 0, "animal_handling": 0,
+    },
+    "willpower": {"current": 0, "max": 10},
+    "pride": "", "dark_secret": "",
+    "inventory": [], "equipment": [], "features": [], "conditions": [],
+    "gold": 0, "xp": {"current": 0, "next_level": 0},
+}
+
 
 class NPCManager(EntityManager):
     """Manage NPC operations. Inherits from EntityManager for common functionality."""
@@ -392,6 +411,19 @@ class NPCManager(EntityManager):
 
         return npcs, name
 
+    def _kit_default_sheet(self):
+        """Blank party-member sheet shaped for the ACTIVE kit. FBL/Year-Zero kits get an
+        FBL sheet (4 attributes + 16 skills + Willpower/Pride); other kits get the generic default."""
+        try:
+            rs = self.json_ops.load_json("ruleset.json") or {}
+        except Exception:
+            rs = {}
+        model = (rs.get("resolution") or {}).get("model", "")
+        attrs = set((rs.get("stat_schema") or {}).get("attributes") or [])
+        if model == "yze-pool" or {"strength", "agility", "wits", "empathy"} <= attrs:
+            return FBL_PARTY_MEMBER_DEFAULTS
+        return PARTY_MEMBER_DEFAULTS
+
     def promote_to_party_member(self, name: str) -> bool:
         """
         Promote an NPC to party member status with default character sheet.
@@ -424,19 +456,13 @@ class NPCManager(EntityManager):
                 print(f"[SUCCESS] {name} rejoined the party (HP: {hp['current']}/{hp['max']}, AC: {ac})")
                 return True
         else:
-            # Create new character sheet with defaults
-            npcs[name]['character_sheet'] = PARTY_MEMBER_DEFAULTS.copy()
-            # Deep copy nested structures
-            npcs[name]['character_sheet']['hp'] = PARTY_MEMBER_DEFAULTS['hp'].copy()
-            npcs[name]['character_sheet']['stats'] = PARTY_MEMBER_DEFAULTS['stats'].copy()
-            npcs[name]['character_sheet']['saves'] = PARTY_MEMBER_DEFAULTS['saves'].copy()
-            npcs[name]['character_sheet']['skills'] = PARTY_MEMBER_DEFAULTS['skills'].copy()
-            npcs[name]['character_sheet']['equipment'] = PARTY_MEMBER_DEFAULTS['equipment'].copy()
-            npcs[name]['character_sheet']['features'] = PARTY_MEMBER_DEFAULTS['features'].copy()
-            npcs[name]['character_sheet']['conditions'] = PARTY_MEMBER_DEFAULTS['conditions'].copy()
+            # Create a new, kit-aware blank character sheet (FBL or generic).
+            import copy as _copy
+            npcs[name]['character_sheet'] = _copy.deepcopy(self._kit_default_sheet())
 
             if self._save_entities(self.npcs_file, npcs):
-                print(f"[SUCCESS] {name} is now a party member (HP: 10/10, AC: 10)")
+                _hp = (npcs[name]['character_sheet'].get('hp') or {})
+                print(f"[SUCCESS] {name} is now a party member (HP: {_hp.get('current','?')}/{_hp.get('max','?')})")
                 return True
 
         return False

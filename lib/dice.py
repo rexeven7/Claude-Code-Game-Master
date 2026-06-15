@@ -11,6 +11,14 @@ import random
 import re
 from typing import List, Tuple, Dict
 
+# Force UTF-8 stdout/stderr so dice/box glyphs do not crash a legacy Windows (cp1252) console.
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 # Import colors for formatted output
 try:
     from lib.colors import Colors, format_roll_result

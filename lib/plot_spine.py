@@ -12,6 +12,9 @@ import json
 import re
 import sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_ops import atomic_write_json
 
 sys.path.insert(0, str(Path(__file__).parent))
 from extraction_cap import load_corpus
@@ -103,13 +106,13 @@ def apply_spine(campaign_dir) -> dict:
     plots_path = cdir / "plots.json"
     plots = json.loads(plots_path.read_text()) if plots_path.exists() else {}
     spine = derive_spine(plots, corpus)
-    plots_path.write_text(json.dumps(plots, indent=2))
+    atomic_write_json(plots_path, plots)
 
     ov_path = cdir / "campaign-overview.json"
     if ov_path.exists():
         overview = json.loads(ov_path.read_text())
         overview["story_spine"] = spine
-        ov_path.write_text(json.dumps(overview, indent=2))
+        atomic_write_json(ov_path, overview)
     return spine
 
 

@@ -102,6 +102,17 @@ case "$ACTION" in
         $PYTHON_CMD "$LIB_DIR/player_manager.py" become "$NAME" "$@"
         ;;
 
+    "switch")
+        if [ -z "$1" ]; then
+            echo "Usage: gm-player.sh switch <party_member_name>"
+            echo "Rotate the active/spotlight PC to a LIVING party member (non-destructive)."
+            echo "The current PC is kept in the party, not archived."
+            exit 1
+        fi
+        NAME="$1"; shift
+        $PYTHON_CMD "$LIB_DIR/player_manager.py" switch "$NAME" "$@"
+        ;;
+
     "gold")
         if [ -z "$1" ]; then
             echo "Usage: gm-player.sh gold <character_name> [+/-amount]"
@@ -183,6 +194,7 @@ case "$ACTION" in
         echo "  hp <name> <+/-amount>        - Modify character HP"
         echo "  kill <name> [--cause ...]    - Mark PC dead (then run Death Protocol)"
         echo "  become <party_member>        - Take over a party member as the active PC"
+    echo "  switch <party_member>        - Rotate spotlight to a LIVING party member (non-destructive)"
         echo "  gold <name> [+/-amount]      - Modify or show character gold"
         echo "  inventory [name] [action]    - Manage inventory (add/remove/list; defaults to active PC + list)"
         echo "  condition <name> <action>    - Manage conditions (add/remove/list)"

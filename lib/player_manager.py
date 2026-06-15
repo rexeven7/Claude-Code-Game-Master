@@ -8,9 +8,20 @@ import sys
 import json
 from typing import Dict, List, Optional, Any
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_ops import atomic_write_json
 
 # Add lib directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
+
+# Force UTF-8 stdout/stderr so dice/box glyphs do not crash a legacy Windows (cp1252) console.
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 from entity_manager import EntityManager
 from character_schema import to_flat, is_open_schema
@@ -539,6 +550,73 @@ class PlayerManager(EntityManager):
             'cause': cause,
         }
 
+    def switch_active(self, name):
+        """Rotate the spotlight to a LIVING party member (non-destructive).
+
+        The current active PC is stashed back into the party as a party member; the
+        named member becomes the active PC. Unlike become() (Death Protocol), nobody is
+        archived to fallen/ - use this to rotate control among living party members."""
+        import shutil
+        from datetime import datetime, timezone
+        npcs = self.json_ops.load_json("npcs.json") or {}
+        npc = npcs.get(name)
+        if npc is None:
+            from entity_aliases import resolve_entity_name
+            key = resolve_entity_name(name, npcs)
+            if key:
+                name, npc = key, npcs[key]
+        if npc is None:
+            print(f"[ERROR] NPC '{name}' not found")
+            return {'success': False}
+        if not npc.get('is_party_member'):
+            print(f"[ERROR] '{name}' is not a party member. Promote them first: gm-npc.sh promote {name}")
+            return {'success': False}
+        sheet = npc.get('character_sheet')
+        if not sheet:
+            print(f"[ERROR] '{name}' has no character sheet to take over.")
+            return {'success': False}
+
+        # Defensive, recoverable backup before swapping the active PC.
+        for fn in ("character.json", "npcs.json", "campaign-overview.json"):
+            src = self.campaign_dir / fn
+            if src.exists():
+                try:
+                    shutil.copy2(src, self.campaign_dir / ("." + fn + ".preswitch"))
+                except Exception:
+                    pass
+
+        new_char = to_flat(dict(sheet))
+        new_char['name'] = name
+        new_char.setdefault('status', 'alive')
+        new_char.pop('died_at', None)
+        new_char.pop('cause', None)
+
+        # Stash the outgoing active PC back into the party (NOT archived).
+        old = self._load_character() if self.character_file.exists() else None
+        if old:
+            old_name = old.get('name') or 'Former PC'
+            entry = npcs.get(old_name, {}) or {}
+            entry.update({
+                "description": entry.get("description") or f"{old_name} - {old.get('race','')} {old.get('class','')}, a fellow adventurer (currently off-spotlight).",
+                "attitude": entry.get("attitude", "helpful"),
+                "is_party_member": True,
+                "character_sheet": old,
+                "created": entry.get("created") or datetime.now(timezone.utc).isoformat(),
+            })
+            entry.pop("became_pc", None)
+            npcs[old_name] = entry
+
+        if not self.json_ops.save_json("character.json", new_char):
+            return {'success': False}
+        self.json_ops.update_json(self.campaign_file, {'current_character': name})
+        npcs[name]['is_party_member'] = False
+        npcs[name]['became_pc'] = True
+        self.json_ops.save_json("npcs.json", npcs)
+        hp = new_char.get('hp', {})
+        print(f"SWITCH You now play as {name}. (Previous PC kept in the party, not archived.)")
+        print(f"HP: {hp.get('current', 0)}/{hp.get('max', 0)} | {new_char.get('race', '?')} {new_char.get('class', '?')}")
+        return {'success': True, 'active': name}
+
     def become(self, npc_name: str) -> Dict[str, Any]:
         """Hand off the active PC to a party member (Death Protocol SWAP).
 
@@ -588,8 +666,7 @@ class PlayerManager(EntityManager):
             dead_name = (old.get('name') if old else None) or 'fallen-hero'
             dead_id = (old.get('id') if old else None) or self._name_to_id(dead_name)
             archived_path = fallen_dir / f"{self._name_to_id(dead_name)}-{dead_id}.json"
-            with open(archived_path, 'w', encoding='utf-8') as f:
-                json.dump(old or {}, f, indent=2)
+            atomic_write_json(archived_path, old or {})
 
         # Write the new character.json.
         if not self.json_ops.save_json("character.json", new_char):
@@ -906,6 +983,10 @@ def main():
     become_parser = subparsers.add_parser('become', help='Take over a party member as the active PC')
     become_parser.add_argument('name', help='Party member NPC name')
 
+    # Rotate the active PC to a LIVING party member (non-destructive)
+    switch_parser = subparsers.add_parser('switch', help='Rotate the active PC to a living party member (non-destructive)')
+    switch_parser.add_argument('name', help='Party member NPC name')
+
     # Get full character JSON
     get_parser = subparsers.add_parser('get', help='Get full character JSON')
     get_parser.add_argument('name', help='Character name')
@@ -1065,6 +1146,10 @@ def main():
 
     elif args.action == 'become':
         result = manager.become(args.name)
+        if not result.get('success'):
+            sys.exit(1)
+    elif args.action == 'switch':
+        result = manager.switch_active(args.name)
         if not result.get('success'):
             sys.exit(1)
 

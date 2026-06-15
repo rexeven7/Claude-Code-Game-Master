@@ -2,6 +2,10 @@
 # common.sh - Common utilities and environment setup for all GM tools
 # This file should be sourced by all other scripts: source "$(dirname "$0")/common.sh"
 
+# Force UTF-8 so Unicode output (dice/box glyphs) never crashes a legacy Windows (cp1252) console.
+export PYTHONUTF8=1
+export PYTHONIOENCODING=utf-8
+
 # Detect Python executable - prefer uv, fallback to python3/python
 find_python() {
     # Try to find uv first

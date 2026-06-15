@@ -15,6 +15,9 @@ import json
 import re
 import sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_ops import atomic_write_json
 
 # Bearer-harm / binding language in MECHANICS that justifies cursed:true.
 _PENALTY_RE = re.compile(
@@ -94,7 +97,7 @@ def run_fixup(campaign_dir) -> dict:
     items = json.loads(path.read_text()) if path.exists() else {}
     report = fix_items(items)
     if items:
-        path.write_text(json.dumps(items, indent=2))
+        atomic_write_json(path, items)
     return report
 
 

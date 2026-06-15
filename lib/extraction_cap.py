@@ -17,6 +17,9 @@ then by how connected they are.
 import json
 import sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_ops import atomic_write_json
 
 sys.path.insert(0, str(Path(__file__).parent))
 from entity_aliases import normalize_entity_name
@@ -114,7 +117,7 @@ def cap_campaign(campaign_dir, limit: int = DEFAULT_LIMIT) -> dict:
             continue
         kept, dropped = cap_type(entities, type_name, corpus, plot_refs, limit)
         if dropped:
-            path.write_text(json.dumps(kept, indent=2))
+            atomic_write_json(path, kept)
         report[type_name] = {"kept": len(kept), "dropped": dropped}
     return report
 

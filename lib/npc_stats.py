@@ -12,6 +12,9 @@ every combatant runnable out of the box.
 import json
 import sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_ops import atomic_write_json
 
 _BOSS_TERMS = ("king", "queen", "prince", "princess", "boss", "dragon", "war god",
                "champion", "lord", "rex", "the great", "emperor", "overlord")
@@ -83,7 +86,7 @@ def run_enrich(campaign_dir) -> dict:
     npcs = json.loads(path.read_text()) if path.exists() else {}
     report = enrich(npcs)
     if npcs:
-        path.write_text(json.dumps(npcs, indent=2))
+        atomic_write_json(path, npcs)
     return report
 
 

@@ -9,6 +9,9 @@ import json
 import shutil
 from typing import Dict, List, Optional, Any
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_ops import atomic_write_json
 from datetime import datetime, timezone
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -322,32 +325,27 @@ class CampaignManager:
                 "current_character": None,
                 "session_count": 0
             }
-            with open(overview_path, 'w', encoding='utf-8') as f:
-                json.dump(overview, f, indent=2)
+            atomic_write_json(overview_path, overview)
 
         # npcs.json
         npcs_path = campaign_path / "npcs.json"
         if not preserve_existing or not npcs_path.exists():
-            with open(npcs_path, 'w', encoding='utf-8') as f:
-                json.dump({}, f, indent=2)
+            atomic_write_json(npcs_path, {})
 
         # locations.json
         locations_path = campaign_path / "locations.json"
         if not preserve_existing or not locations_path.exists():
-            with open(locations_path, 'w', encoding='utf-8') as f:
-                json.dump({}, f, indent=2)
+            atomic_write_json(locations_path, {})
 
         # facts.json
         facts_path = campaign_path / "facts.json"
         if not preserve_existing or not facts_path.exists():
-            with open(facts_path, 'w', encoding='utf-8') as f:
-                json.dump({}, f, indent=2)
+            atomic_write_json(facts_path, {})
 
         # consequences.json
         consequences_path = campaign_path / "consequences.json"
         if not preserve_existing or not consequences_path.exists():
-            with open(consequences_path, 'w', encoding='utf-8') as f:
-                json.dump({"active": [], "resolved": []}, f, indent=2)
+            atomic_write_json(consequences_path, {"active": [], "resolved": []})
 
         # session-log.md - ALWAYS preserve if exists (append only)
         session_log_path = campaign_path / "session-log.md"

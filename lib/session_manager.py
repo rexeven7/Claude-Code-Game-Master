@@ -17,6 +17,14 @@ from entity_manager import EntityManager
 from character_schema import to_flat
 from json_ops import atomic_write_json
 
+# Force UTF-8 stdout/stderr so dice/box glyphs do not crash a legacy Windows (cp1252) console.
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 class SessionManager(EntityManager):
     """Manage D&D session operations. Inherits from EntityManager for common functionality."""
