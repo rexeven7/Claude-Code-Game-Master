@@ -14,6 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from entity_aliases import resolve_entity_name
+from json_ops import atomic_write_json
 
 
 def _now():
@@ -71,7 +72,7 @@ def seed_opening(campaign_dir, timestamp=None) -> dict:
         pos = {}
     pos["current_location"] = opening_loc
     overview["player_position"] = pos
-    (cdir / "campaign-overview.json").write_text(json.dumps(overview, indent=2))
+    atomic_write_json(cdir / "campaign-overview.json", overview)
 
     # 2. mark first spine plot active + opening beat
     first_plot["status"] = "active"
@@ -79,7 +80,7 @@ def seed_opening(campaign_dir, timestamp=None) -> dict:
     beat = f"Opening beat: {hook}"
     if not any(isinstance(e, dict) and e.get("event") == beat for e in events):
         events.append({"event": beat, "timestamp": ts})
-    (cdir / "plots.json").write_text(json.dumps(plots, indent=2))
+    atomic_write_json(cdir / "plots.json", plots)
 
     # 3. session-log opening block (parseable by _recent_session_summaries + _latest_session_meta)
     log = cdir / "session-log.md"

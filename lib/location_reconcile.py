@@ -19,6 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from entity_aliases import resolve_entity_name
+from json_ops import atomic_write_json
 
 
 def _is_stubbable(name: str) -> bool:
@@ -150,11 +151,11 @@ def run_reconcile(campaign_dir) -> dict:
     report = reconcile(npcs, locations, plots, passage_fn=passage_fn)
 
     if locations:
-        (cdir / "locations.json").write_text(json.dumps(locations, indent=2))
+        atomic_write_json(cdir / "locations.json", locations)
     if npcs:
-        (cdir / "npcs.json").write_text(json.dumps(npcs, indent=2))
+        atomic_write_json(cdir / "npcs.json", npcs)
     if plots:
-        (cdir / "plots.json").write_text(json.dumps(plots, indent=2))
+        atomic_write_json(cdir / "plots.json", plots)
     return report
 
 

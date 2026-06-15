@@ -11,6 +11,29 @@ from typing import Dict, List, Any, Optional, Union
 from datetime import datetime, timezone
 
 
+
+def atomic_write_json(path, data, indent: int = 2):
+    """Crash-safe JSON write: serialize to a temp file in the same directory, flush+fsync,
+    then os.replace() into place. An interrupted write can never leave a truncated file.
+    Use this for any direct world-state write that does not go through JsonOperations."""
+    import os, json as _json, tempfile
+    path = str(path)
+    d = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(dir=d, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            _json.dump(data, f, indent=indent, ensure_ascii=False)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 class JsonOperations:
     """Safe JSON file operations for world state management"""
 

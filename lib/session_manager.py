@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from entity_manager import EntityManager
 from character_schema import to_flat
+from json_ops import atomic_write_json
 
 
 class SessionManager(EntityManager):
@@ -294,9 +295,7 @@ class SessionManager(EntityManager):
 
         # Save to file (use absolute path directly, bypassing json_ops path resolution)
         save_path = self.saves_dir / filename
-        import json
-        with open(save_path, 'w', encoding='utf-8') as f:
-            json.dump(save_data, f, indent=2, ensure_ascii=False)
+        atomic_write_json(save_path, save_data)
 
         print(f"[SUCCESS] Save created: {filename}")
         return filename
@@ -887,8 +886,7 @@ class SessionManager(EntityManager):
         # Check if this is new format (single 'character' key) or legacy
         if 'character' in characters and len(characters) == 1:
             # New format: restore to character.json
-            with open(self.character_file, 'w', encoding='utf-8') as f:
-                json.dump(characters['character'], f, indent=2)
+            atomic_write_json(self.character_file, characters['character'])
         else:
             # Legacy format: restore to characters/ directory
             self.characters_dir.mkdir(parents=True, exist_ok=True)

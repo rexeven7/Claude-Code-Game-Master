@@ -6,16 +6,16 @@ The stock `gm-extract.sh prepare` (RAGExtractor) stores chunks with per-document
 (doc_0000...), so vectorizing a second book overwrites the first. This helper reuses the
 SAME extract -> chunk -> embed pipeline but stores every book's chunks with collision-free
 IDs (auto-numbered by the vector store) and per-book provenance, so the whole shelf -
-rules, bestiary, campaign - is searchable together.
+rules, bestiary, campaign, legends - is searchable together.
 
 It only writes to the campaign's vector store; it never touches world-state JSON.
 
-CLI:  vectorize_multi.py <campaign_dir> <file1> [file2 ...]
+CLI:  vectorize_multi.py [--append] <campaign_dir> <file1> [file2 ...]
+      --append  add these documents to the existing index instead of rebuilding it.
 """
 import sys
 from pathlib import Path
 
-# Make both the repo root and lib/ importable regardless of how we're launched.
 _HERE = Path(__file__).resolve().parent          # .../lib
 _ROOT = _HERE.parent                             # repo root
 for _p in (str(_ROOT), str(_HERE)):
@@ -31,7 +31,7 @@ def vectorize_documents(campaign_dir, filepaths, embedder=None, chunk_size=None,
 
     reset=True clears the index once at the start; each document's chunks are then
     appended with unique IDs and metadata {'document','source_file','chunk_index'}.
-    Returns a summary dict.
+    reset=False adds to whatever is already indexed. Returns a summary dict.
     """
     rx = RAGExtractor(str(campaign_dir), chunk_size=chunk_size, embedder=embedder)
     store = rx.vector_store
@@ -39,6 +39,8 @@ def vectorize_documents(campaign_dir, filepaths, embedder=None, chunk_size=None,
     if reset:
         log("Clearing existing index...")
         store.clear()
+    else:
+        log(f"Appending to existing index ({store.count()} chunks already present)...")
 
     per_doc = []
     for fp in filepaths:
@@ -74,12 +76,16 @@ def vectorize_documents(campaign_dir, filepaths, embedder=None, chunk_size=None,
 
 def main():
     import json
-    if len(sys.argv) < 3:
-        print("Usage: vectorize_multi.py <campaign_dir> <file1> [file2 ...]")
+    args = [a for a in sys.argv[1:]]
+    append = "--append" in args
+    args = [a for a in args if a != "--append"]
+    if len(args) < 2:
+        print("Usage: vectorize_multi.py [--append] <campaign_dir> <file1> [file2 ...]")
         sys.exit(1)
-    summary = vectorize_documents(sys.argv[1], sys.argv[2:])
+    summary = vectorize_documents(args[0], args[1:], reset=not append)
     print("\n" + "=" * 50)
-    print(f"Done. {summary['total_chunks']} chunks across {len(summary['documents'])} document(s):")
+    mode = "appended" if append else "indexed"
+    print(f"Done. {mode}; {summary['total_chunks']} chunks total across {len(summary['documents'])} new document(s):")
     for d in summary["documents"]:
         print(f"  - {d['document']}: {d['chunks']}")
     print("JSON:" + json.dumps(summary))

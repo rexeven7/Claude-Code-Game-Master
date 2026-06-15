@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from entity_aliases import resolve_entity_name
+from json_ops import atomic_write_json
 
 
 def _add_alias(entity: dict, variant: str):
@@ -93,11 +94,11 @@ def run_gate(campaign_dir, strict: bool = True) -> dict:
     report = canonicalize(npcs, locations, plots)
 
     if npcs:
-        (cdir / "npcs.json").write_text(json.dumps(npcs, indent=2))
+        atomic_write_json(cdir / "npcs.json", npcs)
     if locations:
-        (cdir / "locations.json").write_text(json.dumps(locations, indent=2))
+        atomic_write_json(cdir / "locations.json", locations)
     if plots:
-        (cdir / "plots.json").write_text(json.dumps(plots, indent=2))
+        atomic_write_json(cdir / "plots.json", plots)
 
     if strict and report["unresolved"]:
         sys.stderr.write(f"INTEGRITY GATE FAILED: {len(report['unresolved'])} unresolved reference(s):\n")
