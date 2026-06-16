@@ -111,3 +111,33 @@ details summary { cursor: pointer; color: #c9a23a; }
 .wizbtns { display:flex; align-items:center; gap:.5rem; margin-top:1rem; border-top:1px solid #2c2419; padding-top:.7rem; }
 .wizbtns .spacer { flex:1; }
 textarea { background:#1c1812; color:#e8e0d0; border:1px solid #3a3025; border-radius:6px; padding:.4rem; width:100%; font:inherit; }
+
+
+/* --- Home / dashboard (Mythwright) --- */
+.hero { text-align: center; padding: 1.9rem 0 1.5rem; border-bottom: 1px solid #2c2419; margin-bottom: 1.5rem; }
+.hero .brand { font-size: 2.7rem; letter-spacing: .03em; margin: 0; text-shadow: 0 2px 18px rgba(201,162,58,.12); }
+.hero .brand::first-letter { color: #c9a23a; }
+.hero .tagline { color: #9b8b63; margin: .35rem 0 0; font-size: 1rem; }
+.sectionhead { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 .6rem; }
+.card.camp { position: relative; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
+.card.camp:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.card.camp h3 { margin-bottom: .3rem; }
+.badges { margin: .1rem 0 .45rem; min-height: 1.2rem; }
+.badge { display: inline-block; background: #241d12; border: 1px solid #5a4a2a; border-radius: 12px; padding: .05rem .55rem; font-size: .68rem; color: #cbbd95; margin-right: .3rem; text-transform: uppercase; letter-spacing: .04em; }
+.badge.kit { border-color: #6b8a3a; color: #b7d488; }
+.loc { font-style: italic; }
+.cardx { position: absolute; top: .5rem; right: .5rem; background: rgba(22,19,15,.85); border: 1px solid #3a3025; color: #9b8b63; border-radius: 6px; font-size: .68rem; padding: .14rem .5rem; opacity: 0; transition: opacity .12s ease; cursor: pointer; }
+.card.camp:hover .cardx { opacity: 1; }
+.cardx:hover { border-color: #c9a23a; color: #d8c79a; }
+.newcard { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-style: dashed; color: #cbbd95; gap: .15rem; min-height: 122px; }
+.newcard .plus { font-size: 2rem; color: #c9a23a; line-height: 1; }
+.newcard:hover { border-color: #c9a23a; }
+.archsec { margin-top: 1.7rem; }
+.linkbtn { background: transparent; border: none; color: #c9a23a; cursor: pointer; font: inherit; padding: .3rem 0; }
+.linkbtn:hover { text-decoration: underline; }
+.card.camp.archived { opacity: .82; cursor: default; }
+.card.camp.archived:hover { transform: none; }
+.cardbtns { display: flex; gap: .5rem; margin-top: .65rem; }
+.btn.danger { border-color: #8a4a3a; color: #e0a08b; }
+.btn.danger:hover { background: #4a2c24; }
+.modal.confirm { width: min(440px, 94vw); }

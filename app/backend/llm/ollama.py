@@ -1,17 +1,18 @@
 """Free/local GM provider via Ollama (a separate app, NOT a pip package).
-Install it from https://ollama.com/download, then: ollama pull qwen2.5:7b
+Install it from https://ollama.com/download, then: ollama pull gemma4
 This client only needs httpx; it talks to the Ollama server over HTTP."""
 import os, json, httpx
 from .base import GMProvider
 
 class OllamaProvider(GMProvider):
     name = "ollama"
-    MODEL = os.environ.get("GM_OLLAMA_MODEL", "qwen2.5:7b")
+    MODEL = os.environ.get("GM_OLLAMA_MODEL", "gemma4")
     HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
     async def narrate(self, system, messages, tools=None):
         payload = {"model": self.MODEL, "stream": True,
-                   "messages": [{"role": "system", "content": system}] + messages}
+                   "messages": [{"role": "system", "content": system}] + messages,
+                   "options": {"temperature": float(os.environ.get("GM_TEMPERATURE", "0.7"))}}
         if tools:
             payload["tools"] = tools
         try:

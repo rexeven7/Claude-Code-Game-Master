@@ -614,3 +614,9 @@ Once the campaign is imported, hand the player off to the single front door:
 
 `/gm` is the canonical entry for every session — do not present a separate
 "continue or new" menu here; `/gm` STEP 0 already handles it.
+
+---
+
+## The imported world becomes a playable KIT (app)
+
+When the import finishes the world owns its `ruleset.json` (its rule system, set by `world-kit-author` -- Year Zero Engine, d20-vs-dc, etc.) with `is_kit: true`. The Forbidden Lands DM app's New Adventure screen lists it under "Choose your ruleset" (`/api/kits`), so you can start fresh adventures in the imported world and play it under its assigned rules. RAG indexing runs on the user's machine; new adventures reuse that index via the kit pointer (`kit_ref`).

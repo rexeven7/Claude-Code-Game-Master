@@ -29,6 +29,7 @@ Write `ruleset.json` to the campaign root in this shape (loaded by
 
 ```json
 {
+  "is_kit": true,
   "name": "<the world's ruleset identity, e.g. 'The Hyborian Age (Conan)'>",
   "stat_schema": { "attributes": ["..."], "vitals": ["hp", "..."] },
   "progression": { "model": "milestone | xp-levels | resource-axis", ... },
@@ -92,3 +93,7 @@ the rules-doc step. Do not author a full rulebook here.
 - Write a `rules.md` modeled on the Forbidden Lands kit's; the play skills (`gm-combat`, `gm-skills`, `gm-conditions`, `gm-travel`, `gm-spellcasting`, `gm-levelup`) will automatically use their **Year Zero Engine** sections when this kit is active.
 
 Pick the resolution model that makes the world PLAY like itself: **d20-vs-dc** for heroic/high fantasy, **yze-pool** for grim survival, **resource-axis** for investigative/horror.
+
+## Make the kit pickable in the app
+
+Set **`"is_kit": true`** in `ruleset.json` for any standalone world (a `/new-game` world or a `/import`-ed book). The Forbidden Lands DM app's New Adventure picker (`/api/kits`) lists every kit that owns a `ruleset.json` and is not itself a playthrough (no `kit_ref`), carrying its `system` / `resolution.model` (Year Zero, d20, ...) and its RAG index for in-play grounding -- so a world you author here becomes a selectable rule system the player can start adventures in.

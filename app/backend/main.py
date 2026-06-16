@@ -34,7 +34,7 @@ def gm_health():
     provider = _os.environ.get("GM_PROVIDER", "ollama").lower()
     if provider == "ollama":
         host = _os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-        model = _os.environ.get("GM_OLLAMA_MODEL", "qwen2.5:7b")
+        model = _os.environ.get("GM_OLLAMA_MODEL", "gemma4")
         try:
             r = _httpx.get(f"{host}/api/tags", timeout=2.0)
             names = [m.get("name", "") for m in r.json().get("models", [])]
@@ -48,8 +48,8 @@ def gm_health():
     return {"provider": provider}
 
 @app.get("/api/campaigns")
-def campaigns():
-    return engine.list_campaigns()
+def campaigns(include_archived: bool = False):
+    return engine.list_campaigns(include_archived=include_archived)
 
 @app.get("/api/campaigns/{cid}")
 def campaign(cid: str):
@@ -57,6 +57,23 @@ def campaign(cid: str):
     if not d.exists():
         raise HTTPException(404, "campaign not found")
     return engine.campaign_detail(cid)
+
+class ArchiveBody(BaseModel):
+    archived: bool = True
+
+@app.post("/api/campaigns/{cid}/archive")
+def archive_campaign(cid: str, body: ArchiveBody):
+    try:
+        return engine.set_archived(cid, body.archived)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+@app.delete("/api/campaigns/{cid}")
+def delete_campaign_ep(cid: str, force: bool = False):
+    try:
+        return engine.delete_campaign(cid, force=force)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 @app.get("/api/campaigns/{cid}/images")
 def images(cid: str):
@@ -91,12 +108,30 @@ def fbl_options():
 from typing import Dict, Any
 class CreateBody(BaseModel):
     name: str
+    kit: str = "forbidden-lands"
     character: Dict[str, Any] = {}
+
+@app.get("/api/kits")
+def kits():
+    """Selectable rule kits for a new adventure (the FBL kit + any imported world)."""
+    return engine.list_kits()
+
+@app.get("/api/kits/{kit}/options")
+def kit_options(kit: str):
+    if not engine.campaign_dir(kit).exists():
+        raise HTTPException(404, "kit not found")
+    if engine._kit_is_fbl(kit):
+        return {"creation": "fbl", **fbl_create.options()}
+    rs = engine._load(engine.campaign_dir(kit) / "ruleset.json") or {}
+    return {"creation": "generic",
+            "system": rs.get("system", ""),
+            "attributes": (rs.get("stat_schema") or {}).get("attributes", []),
+            "identities": ["original", "canon", "nameless"]}
 
 @app.post("/api/campaigns")
 def create_campaign(body: CreateBody):
     try:
-        cid = engine.create_fbl_campaign(body.name, body.character)
+        cid = engine.create_campaign(body.name, kit=body.kit, character=body.character)
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"id": cid, **engine.campaign_detail(cid)}

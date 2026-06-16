@@ -3,30 +3,90 @@ import { useEffect, useRef, useState } from "react";
 const api = (p: string) => fetch(p).then((r) => r.json());
 const post = (p: string, body: any) =>
   fetch(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json());
+const del = (p: string) => fetch(p, { method: "DELETE" }).then((r) => r.json());
 const pretty = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function App() {
   const [camps, setCamps] = useState<any[]>([]);
+  const [arch, setArch] = useState<any[]>([]);
+  const [showArch, setShowArch] = useState(false);
   const [cid, setCid] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
-  const refresh = () => api("/api/campaigns").then(setCamps);
+  const [confirmDel, setConfirmDel] = useState<any>(null);
+  const refresh = () => {
+    api("/api/campaigns").then(setCamps);
+    api("/api/campaigns?include_archived=true").then((all) => setArch((all || []).filter((c: any) => c.archived)));
+  };
   useEffect(() => { refresh(); }, []);
+  const setArchived = (id: string, on: boolean) => post(`/api/campaigns/${id}/archive`, { archived: on }).then(refresh);
+  const doDelete = (id: string) => del(`/api/campaigns/${id}`).then((r) => {
+    if (r && r.detail) setConfirmDel((cd: any) => (cd ? { ...cd, error: r.detail } : cd));
+    else { setConfirmDel(null); refresh(); }
+  });
   if (cid) return <Campaign cid={cid} onBack={() => { setCid(null); refresh(); }} />;
   return (
     <div className="wrap">
-      <h1>Forbidden Lands — DM</h1>
-      <h3>Campaigns</h3>
+      <header className="hero">
+        <h1 className="brand">Mythwright</h1>
+        <p className="tagline">Your AI Game Master for any world — Forbidden Lands, D&amp;D, or any book you bring.</p>
+      </header>
+
+      <div className="sectionhead"><h3>Campaigns</h3><span className="muted">{camps.length} active</span></div>
       <div className="grid">
         {camps.map((c) => (
-          <div key={c.id} className="card" onClick={() => setCid(c.id)}>
+          <div key={c.id} className="card camp" onClick={() => setCid(c.id)}>
+            <button className="cardx" title="Archive" onClick={(e) => { e.stopPropagation(); setArchived(c.id, true); }}>Archive</button>
             <h3>{c.name}</h3>
-            <div>{c.current_character || "no character"} · {c.session_count} sessions</div>
-            <div className="muted">{c.location}</div>
+            <div className="badges">
+              {c.system && <span className="badge">{c.system}</span>}
+              {c.is_kit && <span className="badge kit">kit</span>}
+            </div>
+            <div className="muted">{c.current_character || "no character"} · {c.session_count} session{c.session_count === 1 ? "" : "s"}</div>
+            {c.location && <div className="muted loc">{c.location}</div>}
           </div>
         ))}
-        <div className="card" style={{ borderStyle: "dashed" }} onClick={() => setNewOpen(true)}>+ New Adventure</div>
+        <div className="card newcard" onClick={() => setNewOpen(true)}>
+          <div className="plus">+</div><div>New Adventure</div>
+          <div className="muted">Pick a ruleset &amp; begin</div>
+        </div>
       </div>
+
+      {arch.length > 0 && (
+        <div className="archsec">
+          <button className="linkbtn" onClick={() => setShowArch(!showArch)}>{showArch ? "Hide" : "Show"} archived ({arch.length})</button>
+          {showArch && (
+            <div className="grid">
+              {arch.map((c) => (
+                <div key={c.id} className="card camp archived">
+                  <h3>{c.name}</h3>
+                  <div className="muted">{c.current_character || "no character"} · {c.session_count} sessions</div>
+                  <div className="cardbtns">
+                    <button className="btn" onClick={() => setArchived(c.id, false)}>Restore</button>
+                    <button className="btn danger" onClick={() => setConfirmDel({ id: c.id, name: c.name, is_kit: c.is_kit })}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {newOpen && <NewAdventure onClose={() => setNewOpen(false)} onCreated={(id: string) => { setNewOpen(false); refresh(); setCid(id); }} />}
+
+      {confirmDel && (
+        <div className="overlay" onClick={() => setConfirmDel(null)}>
+          <div className="modal confirm" onClick={(e) => e.stopPropagation()}>
+            <h2>Delete campaign?</h2>
+            <p>Permanently delete <b>{confirmDel.name}</b>? This cannot be undone.</p>
+            {confirmDel.is_kit && <p className="muted">Heads up: this world is also a kit other adventures may build on.</p>}
+            {confirmDel.error && <div className="err">{confirmDel.error}</div>}
+            <div className="wizbtns">
+              <button className="btn" onClick={() => setConfirmDel(null)}>Cancel</button><span className="spacer" />
+              <button className="btn danger" onClick={() => doDelete(confirmDel.id)}>Delete permanently</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -172,15 +232,15 @@ function TranscriptEntry({ e, onChoose }: { e: Entry; onChoose: (t: string) => v
     if (e.name === "roll_dice") {
       return (
         <div>
-          <span className="chip">\U0001F3B2 {r.successes ?? 0} success{r.successes === 1 ? "" : "es"}{r.pushed ? " · pushed" : ""}{r.attribute_banes ? ` · ▼${r.attribute_banes} attr` : ""}</span>
+          <span className="chip">🎲 {r.successes ?? 0} success{r.successes === 1 ? "" : "es"}{r.pushed ? " · pushed" : ""}{r.attribute_banes ? ` · ▼${r.attribute_banes} attr` : ""}</span>
           {r.faces && <DiceRow faces={r.faces} />}
         </div>
       );
     }
     let label: any = e.name;
     if (e.name === "move_to") label = `→ moved to ${r.location || "?"}`;
-    else if (e.name === "illustrate") label = r.error ? `\U0001F5BC image failed (${r.error})` : "\U0001F5BC painted a scene";
-    else if (e.name === "lookup") label = "\U0001F4D6 consulted the books";
+    else if (e.name === "illustrate") label = r.error ? `🖼 image failed (${r.error})` : "🖼 painted a scene";
+    else if (e.name === "lookup") label = "📖 consulted the books";
     else if (e.name === "update_character") label = "✎ character updated";
     else if (e.name === "record_event") label = "✎ noted";
     return <div><span className="chip">{label}</span></div>;
@@ -298,7 +358,7 @@ function Gallery({ gal, imgUrl, onZoom }: any) {
 function Die({ f, kind }: { f: number; kind: string }) {
   const bane = f === 1 && kind !== "skill";
   const cls = "die " + kind + (f === 6 ? " success" : bane ? " bane" : " blank");
-  return <span className={cls} title={`${kind} die: ${f}`}>{f === 6 ? "⚔" : bane ? "\U0001F480" : f}</span>;
+  return <span className={cls} title={`${kind} die: ${f}`}>{f === 6 ? "⚔" : bane ? "💀" : f}</span>;
 }
 function DiceRow({ faces }: { faces: any }) {
   const grp = (label: string, arr: number[], kind: string) =>
@@ -330,13 +390,13 @@ function DiceWidget({ pending, state, send }: { pending: any; state: any; send: 
   if (state) {
     return (
       <div className="card dice">
-        <b>\U0001F3B2 {label}</b> <span className="muted">{comp}{state.pushed ? " · pushed" : ""}</span>
+        <b>🎲 {label}</b> <span className="muted">{comp}{state.pushed ? " · pushed" : ""}</span>
         <DiceRow faces={state.faces} />
         <div className="diceres">
           {state.success
             ? <span className="ok">{state.successes} success{state.successes === 1 ? "" : "es"} ⚔</span>
             : <span className="fail">Failure — 0 successes ✗</span>}
-          {state.pushed && state.attribute_banes > 0 && <span className="bane"> · ▼{state.attribute_banes} attribute \U0001F480 · +{state.willpower} WP</span>}
+          {state.pushed && state.attribute_banes > 0 && <span className="bane"> · ▼{state.attribute_banes} attribute 💀 · +{state.willpower} WP</span>}
           {state.pushed && state.gear_banes > 0 && <span className="bane"> · gear damaged ×{state.gear_banes}</span>}
         </div>
         {pushing && mode === "manual" ? (
@@ -360,7 +420,7 @@ function DiceWidget({ pending, state, send }: { pending: any; state: any; send: 
   }
   return (
     <div className="card dice">
-      <b>\U0001F3B2 The GM calls for a roll — {label}</b>
+      <b>🎲 The GM calls for a roll — {label}</b>
       <div className="muted">{comp}{pool.push ? " · push allowed" : ""}</div>
       <DicePreview pool={pool} />
       {mode === "auto" ? (
@@ -386,6 +446,18 @@ function NewAdventure({ onClose, onCreated }: { onClose: () => void; onCreated: 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [advName, setAdvName] = useState("");
+  const [kits, setKits] = useState<any[]>([]);
+  const [kit, setKit] = useState<string>("");
+  const [gen, setGen] = useState<any>({ name: "", identity: "original", concept: "" });
+  useEffect(() => { api("/api/kits").then(setKits); }, []);
+  const kitObj = kits.find((k: any) => k.id === kit);
+  const create = () => {
+    if (!advName.trim()) { setErr("Name your adventure."); setStep(0); return; }
+    setBusy(true); setErr("");
+    post("/api/campaigns", { name: advName, kit, character: kitObj?.creation === "generic" ? gen : s })
+      .then((r) => { if (r?.id) onCreated(r.id); else { setErr(r?.detail || "Could not create."); setBusy(false); } })
+      .catch(() => { setErr("Could not create."); setBusy(false); });
+  };
   const [s, setS] = useState<any>({ name: "", kin: "Human", profession: "Hunter", sex: "", age: "Adult",
     attributes: { strength: 2, agility: 2, wits: 2, empathy: 2 }, skills: {},
     profession_talent: "", general_talents: [], pride: "", dark_secret: "", background: "", appearance: {} });
@@ -414,8 +486,51 @@ function NewAdventure({ onClose, onCreated }: { onClose: () => void; onCreated: 
     n.general_talents = []; n.pride = profOf(n.profession)?.pride?.[0] || ""; n.dark_secret = profOf(n.profession)?.dark_secret?.[0] || "";
     return n;
   };
-  useEffect(() => { api("/api/fbl/options").then(setOpts); }, []);
+  useEffect(() => { if (kit && kitObj?.creation === "fbl") api(`/api/kits/${kit}/options`).then(setOpts); }, [kit]);
   useEffect(() => { if (opts) setS((pp: any) => applyDefaults({ ...pp })); }, [opts]);
+  if (!kit) return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal wizard" onClick={(e) => e.stopPropagation()}>
+        <h2>New Adventure</h2>
+        <p className="muted">Choose your ruleset and world. Each kit brings its own rules - combat, skills, magic, and advancement.</p>
+        {kits.length === 0 && <p className="muted">Loading kits...</p>}
+        <div className="kitlist">
+          {kits.map((k: any) => (
+            <div key={k.id} className="card kit" onClick={() => { setKit(k.id); setStep(0); setErr(""); }}>
+              <b>{k.name}</b> <span className="muted">{k.system}{k.creation === "fbl" ? " - full character builder" : ""}</span>
+              {k.description && <p className="muted">{k.description}</p>}
+            </div>
+          ))}
+        </div>
+        <p className="muted">Want another world? In Claude Code, run <code>/import &lt;your-book.pdf&gt;</code> and choose a rule system (Forbidden Lands / Year Zero, or D&amp;D / d20). It builds a kit - RAG indexing runs on your own machine - that then appears here to play.</p>
+        <div className="wizbtns"><button className="btn" onClick={onClose}>Cancel</button></div>
+      </div>
+    </div>
+  );
+  if (kitObj?.creation === "generic") return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal wizard" onClick={(e) => e.stopPropagation()}>
+        <h2>New Adventure - {kitObj.name}</h2>
+        <p className="muted">{kitObj.system}. Sketch your character; the Game Master fleshes out the details in play.</p>
+        <label className="fld">Adventure name<input value={advName} onChange={(e) => setAdvName(e.target.value)} placeholder="The Long Road" /></label>
+        <label className="fld">Character name<input value={gen.name} onChange={(e) => setGen({ ...gen, name: e.target.value })} placeholder="(blank = Wanderer)" /></label>
+        <label className="fld">Who are you in this world?
+          <select value={gen.identity} onChange={(e) => setGen({ ...gen, identity: e.target.value })}>
+            <option value="original">An original character</option>
+            <option value="canon">A canon figure from the source</option>
+            <option value="nameless">Nameless - discover who you are in play</option>
+          </select>
+        </label>
+        <label className="fld">Concept<textarea rows={3} value={gen.concept} onChange={(e) => setGen({ ...gen, concept: e.target.value })} placeholder="A line or two: what you are, what drives you..." /></label>
+        {err && <div className="err">{err}</div>}
+        <div className="wizbtns">
+          <button className="btn" onClick={onClose}>Cancel</button><span className="spacer" />
+          <button className="btn" onClick={() => setKit("")}>Ruleset</button>
+          <button className="btn" onClick={create} disabled={busy}>{busy ? "Creating..." : "Begin"}</button>
+        </div>
+      </div>
+    </div>
+  );
   if (!opts) return (<div className="overlay" onClick={onClose}><div className="modal" onClick={(e) => e.stopPropagation()}>Loading…</div></div>);
   const prof = profOf(s.profession), kin = kinOf(s.kin), age = opts.ages[s.age];
   const cap = (a: string) => { const pk = prof?.key_attribute, kk = kin?.key_attribute; return (a === pk && a === kk) ? 6 : (a === pk || a === kk) ? 5 : 4; };
@@ -429,13 +544,6 @@ function NewAdventure({ onClose, onCreated }: { onClose: () => void; onCreated: 
   const setApp = (k: string, v: string) => setS((pp: any) => ({ ...pp, appearance: { ...pp.appearance, [k]: v } }));
   const toggleGen = (t: string) => setS((pp: any) => { const has = pp.general_talents.includes(t); let g = has ? pp.general_talents.filter((x: string) => x !== t) : [...pp.general_talents, t]; if (g.length > genCap) g = g.slice(g.length - genCap); return { ...pp, general_talents: g }; });
   const steps = ["Identity", "Attributes", "Skills", "Talents", "Pride & Secret", "Look", "Review"];
-  const create = () => {
-    if (!advName.trim()) { setErr("Name your adventure."); setStep(0); return; }
-    setBusy(true); setErr("");
-    post("/api/campaigns", { name: advName, character: s })
-      .then((r) => { if (r?.id) onCreated(r.id); else { setErr(r?.detail || "Could not create."); setBusy(false); } })
-      .catch(() => { setErr("Could not create."); setBusy(false); });
-  };
   const customPride = !(prof?.pride || []).includes(s.pride);
   const customDark = !(prof?.dark_secret || []).includes(s.dark_secret);
   return (
@@ -499,7 +607,7 @@ function NewAdventure({ onClose, onCreated }: { onClose: () => void; onCreated: 
         </div>)}
         <div className="wizbtns">
           <button className="btn" onClick={onClose}>Cancel</button><span className="spacer" />
-          {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>Back</button>}
+          {step > 0 ? <button className="btn" onClick={() => setStep(step - 1)}>Back</button> : <button className="btn" onClick={() => setKit("")}>Ruleset</button>}
           {step < 6 ? <button className="btn" onClick={() => setStep(step + 1)}>Next</button>
                     : <button className="btn" onClick={create} disabled={busy}>{busy ? "Creating…" : "Begin the hunt"}</button>}
         </div>

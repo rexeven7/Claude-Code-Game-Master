@@ -213,6 +213,30 @@ def _parse_text_tools(text):
     cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
     return cleaned, calls
 
+# ---------- dice guard: catch a model that NARRATES a roll result instead of rolling ----------
+_FAKE_ROLL_RE = re.compile(
+    r'(\b\d+\s+succe\w*)'
+    r'|(\broll\s+results?\b)'
+    r'|(\bdice\s+(show|reveal|comes? up|land))'
+    r'|(\b(succe\w*|fail\w*|bane)\b[^.\n]{0,30}\b(roll|dice|check|d6)\b)'
+    r'|(\b(roll|dice|check|d6)\b[^.\n]{0,30}\b(succe\w*|fail\w*|bane)\b)',
+    re.IGNORECASE)
+_FAKE_SENT_RE = re.compile(r'(\d+\s+succe\w*)|(roll\s+results?)|(\bdice\b)|(\bsucce\w*\b)|(\bbane\b)|(\byou\s+roll)', re.IGNORECASE)
+
+def _fabricated_roll(text):
+    """True if the narration ASSERTS a dice outcome (successes/failure on a roll) -
+    a tell that a weak model resolved the action in prose instead of calling roll_dice."""
+    return bool(_FAKE_ROLL_RE.search(text or ""))
+
+def _strip_fake_roll(text):
+    """Drop the invented dice-result sentences so they never reach the player; keep the
+    surrounding scene description."""
+    out = []
+    for line in (text or "").split("\n"):
+        sents = re.split(r'(?<=[.!?])\s+', line)
+        out.append(" ".join(s for s in sents if not _FAKE_SENT_RE.search(s)).strip())
+    return re.sub(r'\n{3,}', '\n\n', "\n".join(out)).strip()
+
 # ---------- tool execution (routes through the REAL managers) ----------
 def _exec(cid, name, args):
     cdir = engine.campaign_dir(cid); ws = str(engine.REPO / "world-state")
@@ -275,8 +299,9 @@ def _exec(cid, name, args):
     return {"error": f"unknown tool {name}"}
 
 # ---------- the loop ----------
-async def _loop(cid, emit, provider, mode, passages=None, skill_doc=""):
+async def _loop(cid, emit, provider, mode, passages=None, skill_doc="", guard=True):
     hist = ROOMS[cid]; system = _system(cid, mode, passages, skill_doc)
+    forced = 0
     for _ in range(6):
         raw = ""; native = []
         async for ev in provider.narrate(system, hist, TOOLS):
@@ -285,9 +310,17 @@ async def _loop(cid, emit, provider, mode, passages=None, skill_doc=""):
             elif ev.get("type") == "tool_use":
                 native.append(ev)
         cleaned, parsed = _parse_text_tools(raw)
+        calls = native + parsed
+        if not calls and guard and forced < 1 and _kit(cid) == "fbl" and _fabricated_roll(cleaned):
+            forced += 1                                             # model narrated a roll without rolling -> force a real one
+            stripped = _strip_fake_roll(cleaned)
+            if raw:
+                await emit({"type": "clean", "text": stripped})     # drop the invented result from the bubble
+            hist.append({"role": "assistant", "content": stripped})
+            hist.append({"role": "user", "content": "[SYSTEM] You stated a dice result (successes/failure) but never called roll_dice, so no dice were actually rolled. Do NOT narrate the outcome. Call the roll_dice tool NOW for that action -- name the attribute (STR/AGI/WITS/EMP) and skill_name, with base = the attribute rating, skill = the skill level, gear = the gear bonus -- then stop and wait."})
+            continue
         if raw:
             await emit({"type": "clean", "text": cleaned})          # replace streamed bubble w/ tool-syntax stripped
-        calls = native + parsed
         if not calls:
             hist.append({"role": "assistant", "content": cleaned}); break
         hist.append({"role": "assistant", "content": cleaned,
@@ -379,7 +412,7 @@ async def dice_step(cid, payload, emit, provider=None):
         ROOMS[cid].append({"role": "tool", "name": "roll_dice", "content": json.dumps(result)})
         passages, skill, skill_doc = ROOM_CTX.get(cid, ([], None, ""))
         try:
-            await _loop(cid, emit, provider or _provider(), ROOM_MODE.get(cid, "auto"), passages, skill_doc)
+            await _loop(cid, emit, provider or _provider(), ROOM_MODE.get(cid, "auto"), passages, skill_doc, guard=False)
         except Exception as e:
             await emit({"type": "error", "text": f"GM error: {e}"}); await emit({"type": "done"})
 
