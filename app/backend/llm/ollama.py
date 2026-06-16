@@ -9,6 +9,16 @@ class OllamaProvider(GMProvider):
     MODEL = os.environ.get("GM_OLLAMA_MODEL", "gemma4")
     HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
+    async def complete(self, system, user, *, max_tokens=4096, temperature=0.3):
+        payload = {"model": self.MODEL, "stream": False,
+                   "messages": [{"role": "system", "content": system},
+                                {"role": "user", "content": user}],
+                   "options": {"temperature": temperature, "num_predict": max_tokens}}
+        async with httpx.AsyncClient(timeout=None) as c:
+            r = await c.post(f"{self.HOST}/api/chat", json=payload)
+            r.raise_for_status()
+            return ((r.json() or {}).get("message", {}) or {}).get("content", "") or ""
+
     async def narrate(self, system, messages, tools=None):
         payload = {"model": self.MODEL, "stream": True,
                    "messages": [{"role": "system", "content": system}] + messages,

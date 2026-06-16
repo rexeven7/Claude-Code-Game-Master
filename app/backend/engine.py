@@ -246,7 +246,7 @@ def list_kits():
             "name": rs.get("name") or ov.get("campaign_name") or d.name,
             "system": rs.get("system") or "",
             "model": (rs.get("resolution") or {}).get("model") or "",
-            "creation": "fbl" if _kit_is_fbl(d.name) else "generic",
+            "creation": "fbl" if d.name == "forbidden-lands" else "generic",
             "has_rag": vec.exists() and any(vec.iterdir()),
             "description": (desc or "").strip()[:240],
         })

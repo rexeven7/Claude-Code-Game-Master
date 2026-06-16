@@ -141,3 +141,10 @@ textarea { background:#1c1812; color:#e8e0d0; border:1px solid #3a3025; border-r
 .btn.danger { border-color: #8a4a3a; color: #e0a08b; }
 .btn.danger:hover { background: #4a2c24; }
 .modal.confirm { width: min(440px, 94vw); }
+
+/* --- World import / new-game --- */
+.kit.newworld { text-align: center; border-style: dashed; }
+.kit.newworld:hover { border-color: #c9a23a; }
+.buildlog { background: #110e0a; border: 1px solid #2c2419; border-radius: 8px; padding: .7rem .9rem; max-height: 300px; overflow: auto; margin: .4rem 0 .2rem; font-family: ui-monospace, monospace; font-size: .85rem; }
+.buildstep { color: #9b8b63; padding: .1rem 0; }
+.buildstep.working { color: #c9a23a; }

@@ -8,3 +8,4 @@ anthropic>=0.40        # Claude GM provider (needs ANTHROPIC_API_KEY)
 
 python-dotenv>=1.0
 requests>=2.31
+python-multipart

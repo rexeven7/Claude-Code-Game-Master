@@ -10,3 +10,13 @@ class GMProvider:
         Implemented by ClaudeProvider (Anthropic API) and OllamaProvider (local)."""
         raise NotImplementedError
         yield  # pragma: no cover
+
+    async def complete(self, system: str, user: str, *, max_tokens: int = 4096,
+                       temperature: float = 0.3) -> str:
+        """One-shot, non-streaming text completion (no tools) for world import/authoring.
+        Default accumulates narrate() text; providers override for token/temperature control."""
+        parts: List[str] = []
+        async for ev in self.narrate(system, [{"role": "user", "content": user}], None):
+            if ev.get("type") == "text" and ev.get("text"):
+                parts.append(ev["text"])
+        return "".join(parts)

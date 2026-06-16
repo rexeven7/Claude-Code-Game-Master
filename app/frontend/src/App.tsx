@@ -449,6 +449,11 @@ function NewAdventure({ onClose, onCreated }: { onClose: () => void; onCreated: 
   const [kits, setKits] = useState<any[]>([]);
   const [kit, setKit] = useState<string>("");
   const [gen, setGen] = useState<any>({ name: "", identity: "original", concept: "" });
+  const [building, setBuilding] = useState<any>(null);   // {steps:[], done?, kit?, name?, error?}
+  const [mode, setMode] = useState<string>("");           // "" | "create"
+  const [world, setWorld] = useState<any>({ name: "", premise: "", tone: "", genre: "" });
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const refreshKits = () => api("/api/kits").then(setKits);
   useEffect(() => { api("/api/kits").then(setKits); }, []);
   const kitObj = kits.find((k: any) => k.id === kit);
   const create = () => {
@@ -457,6 +462,32 @@ function NewAdventure({ onClose, onCreated }: { onClose: () => void; onCreated: 
     post("/api/campaigns", { name: advName, kit, character: kitObj?.creation === "generic" ? gen : s })
       .then((r) => { if (r?.id) onCreated(r.id); else { setErr(r?.detail || "Could not create."); setBusy(false); } })
       .catch(() => { setErr("Could not create."); setBusy(false); });
+  };
+  const openBuildWS = (job: string) => {
+    setBuilding({ steps: [], job });
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    const sock = new WebSocket(`${proto}://${location.host}/ws/build/${job}`);
+    sock.onmessage = (e) => {
+      const ev = JSON.parse(e.data);
+      if (ev.type === "progress") setBuilding((b: any) => ({ ...b, steps: [...(b?.steps || []), ev.step] }));
+      else if (ev.type === "done") { setBuilding((b: any) => ({ ...b, done: true, kit: ev.kit, name: ev.name })); refreshKits(); sock.close(); }
+      else if (ev.type === "error") { setBuilding((b: any) => ({ ...b, error: ev.text })); sock.close(); }
+    };
+    sock.onerror = () => setBuilding((b: any) => ({ ...(b || { steps: [] }), error: "connection lost" }));
+  };
+  const startImport = (file: File) => {
+    const fd = new FormData(); fd.append("file", file);
+    if (world.name.trim()) fd.append("name", world.name.trim());
+    setBuilding({ steps: ["uploading " + file.name] });
+    fetch("/api/import", { method: "POST", body: fd }).then((r) => r.json())
+      .then((r) => { if (r?.job) openBuildWS(r.job); else setBuilding({ steps: [], error: r?.detail || "upload failed" }); })
+      .catch(() => setBuilding({ steps: [], error: "upload failed" }));
+  };
+  const startCreate = () => {
+    if (!world.name.trim()) { setErr("Name your world."); return; }
+    post("/api/new-game", world)
+      .then((r) => { if (r?.job) openBuildWS(r.job); else setBuilding({ steps: [], error: r?.detail || "could not start" }); })
+      .catch(() => setBuilding({ steps: [], error: "could not start" }));
   };
   const [s, setS] = useState<any>({ name: "", kin: "Human", profession: "Hunter", sex: "", age: "Adult",
     attributes: { strength: 2, agility: 2, wits: 2, empathy: 2 }, skills: {},
@@ -488,11 +519,49 @@ function NewAdventure({ onClose, onCreated }: { onClose: () => void; onCreated: 
   };
   useEffect(() => { if (kit && kitObj?.creation === "fbl") api(`/api/kits/${kit}/options`).then(setOpts); }, [kit]);
   useEffect(() => { if (opts) setS((pp: any) => applyDefaults({ ...pp })); }, [opts]);
+  if (building) return (
+    <div className="overlay">
+      <div className="modal wizard" onClick={(e) => e.stopPropagation()}>
+        <h2>{building.done ? "World ready" : building.error ? "Build failed" : "Building your world..."}</h2>
+        <div className="buildlog">
+          {(building.steps || []).map((sline: string, i: number) => <div key={i} className="buildstep">{sline}</div>)}
+          {!building.done && !building.error && <div className="buildstep working">working...</div>}
+          {building.error && <div className="err">{building.error}</div>}
+        </div>
+        <div className="wizbtns">
+          {building.done
+            ? (<><span className="spacer" /><button className="btn" onClick={() => { const k = building.kit; setBuilding(null); setKit(k); setStep(0); setErr(""); }}>Enter {building.name || "world"}</button></>)
+            : building.error
+              ? (<button className="btn" onClick={() => setBuilding(null)}>Back</button>)
+              : (<span className="muted">This can take a few minutes - your GM model reads the whole source.</span>)}
+        </div>
+      </div>
+    </div>
+  );
+  if (!kit && mode === "create") return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal wizard" onClick={(e) => e.stopPropagation()}>
+        <h2>Create a world</h2>
+        <p className="muted">Describe the world; Mythwright authors a playable kit (rules, voice, a starting map) you then make characters in.</p>
+        <label className="fld">World name<input value={world.name} onChange={(e) => setWorld({ ...world, name: e.target.value })} placeholder="The Ashen Reach" /></label>
+        <label className="fld">Premise<textarea rows={3} value={world.premise} onChange={(e) => setWorld({ ...world, premise: e.target.value })} placeholder="A frontier reborn from ash; rival clans race to relight the beacons..." /></label>
+        <div className="frow">
+          <label className="fld">Tone<input value={world.tone} onChange={(e) => setWorld({ ...world, tone: e.target.value })} placeholder="hopeful, gritty..." /></label>
+          <label className="fld">Genre<input value={world.genre} onChange={(e) => setWorld({ ...world, genre: e.target.value })} placeholder="frontier fantasy" /></label>
+        </div>
+        {err && <div className="err">{err}</div>}
+        <div className="wizbtns">
+          <button className="btn" onClick={() => { setMode(""); setErr(""); }}>Back</button><span className="spacer" />
+          <button className="btn" onClick={startCreate}>Author the world</button>
+        </div>
+      </div>
+    </div>
+  );
   if (!kit) return (
     <div className="overlay" onClick={onClose}>
       <div className="modal wizard" onClick={(e) => e.stopPropagation()}>
         <h2>New Adventure</h2>
-        <p className="muted">Choose your ruleset and world. Each kit brings its own rules - combat, skills, magic, and advancement.</p>
+        <p className="muted">Pick a world to play, or bring your own - import a book or author one from a premise. Each kit carries its own rules.</p>
         {kits.length === 0 && <p className="muted">Loading kits...</p>}
         <div className="kitlist">
           {kits.map((k: any) => (
@@ -502,11 +571,18 @@ function NewAdventure({ onClose, onCreated }: { onClose: () => void; onCreated: 
             </div>
           ))}
         </div>
-        <p className="muted">Want another world? In Claude Code, run <code>/import &lt;your-book.pdf&gt;</code> and choose a rule system (Forbidden Lands / Year Zero, or D&amp;D / d20). It builds a kit - RAG indexing runs on your own machine - that then appears here to play.</p>
+        <div className="frow" style={{ marginTop: ".5rem" }}>
+          <div className="card kit newworld" onClick={() => fileRef.current?.click()}><b>+ Import a book</b><br /><span className="muted">PDF / TXT / DOCX into a playable kit</span></div>
+          <div className="card kit newworld" onClick={() => { setMode("create"); setErr(""); }}><b>+ Create a world</b><br /><span className="muted">Author one from a premise</span></div>
+        </div>
+        <input ref={fileRef} type="file" accept=".pdf,.txt,.md,.docx" style={{ display: "none" }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) startImport(f); }} />
+        <p className="muted">Import &amp; authoring use your configured GM model. The search index (RAG) builds only if its deps are installed on this machine.</p>
         <div className="wizbtns"><button className="btn" onClick={onClose}>Cancel</button></div>
       </div>
     </div>
   );
+
   if (kitObj?.creation === "generic") return (
     <div className="overlay" onClick={onClose}>
       <div className="modal wizard" onClick={(e) => e.stopPropagation()}>

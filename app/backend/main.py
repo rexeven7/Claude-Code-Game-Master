@@ -9,11 +9,13 @@ import dice                                    # the existing YZE dice engine
 import gm                                      # the GM agent loop
 import fbl_create                              # guided FBL character creation (the kit's inference)
 import fbl_generators                          # legend/monster/NPC/site generator tools
+import worldgen                               # in-app world import + new-game
+import uuid, asyncio
 try:
     from dotenv import load_dotenv; load_dotenv()
 except Exception:
     pass
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -135,6 +137,61 @@ def create_campaign(body: CreateBody):
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"id": cid, **engine.campaign_detail(cid)}
+
+# --- World creation: import a book OR author a new world (provider-driven, lib pipeline) ---
+BUILD_JOBS: dict = {}        # job_id -> asyncio.Queue of progress events
+
+async def _run_build(job: str, coro):
+    q = BUILD_JOBS[job]
+    try:
+        await coro
+    except Exception as e:
+        await q.put({"type": "error", "text": f"build failed: {e}"})
+
+@app.post("/api/import")
+async def import_book(file: UploadFile = File(...), name: str = Form(None)):
+    job = uuid.uuid4().hex
+    BUILD_JOBS[job] = asyncio.Queue()
+    src = engine.REPO / "source-material" / (file.filename or f"{job}.txt")
+    src.parent.mkdir(parents=True, exist_ok=True)
+    src.write_bytes(await file.read())
+    disp = (name or "").strip() or _os.path.splitext(file.filename or "Imported World")[0]
+    async def emit(ev): await BUILD_JOBS[job].put(ev)
+    asyncio.create_task(_run_build(job, worldgen.import_pdf(disp, str(src), emit=emit)))
+    return {"job": job}
+
+class NewGameBody(BaseModel):
+    name: str
+    premise: str = ""
+    tone: str = ""
+    genre: str = ""
+    magic: str = ""
+    system: str = ""
+
+@app.post("/api/new-game")
+async def new_game_ep(body: NewGameBody):
+    job = uuid.uuid4().hex
+    BUILD_JOBS[job] = asyncio.Queue()
+    async def emit(ev): await BUILD_JOBS[job].put(ev)
+    asyncio.create_task(_run_build(job, worldgen.new_game(body.dict(), emit=emit)))
+    return {"job": job}
+
+@app.websocket("/ws/build/{job}")
+async def ws_build(websocket: WebSocket, job: str):
+    await websocket.accept()
+    q = BUILD_JOBS.get(job)
+    if q is None:
+        await websocket.send_json({"type": "error", "text": "unknown build job"}); await websocket.close(); return
+    try:
+        while True:
+            ev = await q.get()
+            await websocket.send_json(ev)
+            if ev.get("type") in ("done", "error"):
+                break
+    except WebSocketDisconnect:
+        pass
+    finally:
+        BUILD_JOBS.pop(job, None)
 
 # --- Generator tools (legend / monster / npc / site) - real book tables + RAG ---
 class GenBody(BaseModel):
