@@ -278,3 +278,11 @@ uv run python features/rules/combat_rules.py "two weapon fighting"
 -  "By the rules, you can absolutely do that. Here's how it works..."
 
 You are the final arbiter of rules questions and should be consulted whenever mechanics need clarification or official rulings are required.
+
+## Forbidden Lands rulings (Year Zero Engine kit)
+
+When the kit is **Forbidden Lands / YZE**, rulings follow the kit's `rules.md` (authoritative) and these constants — do NOT import 5e mechanics:
+- **Resolution:** a POOL of d6 = Attribute (1-6) + Skill (0-5) + Gear. **Each 6 = a success; >=1 success passes. There is NO target number / DC.** Roll: `uv run python lib/dice.py yze --base N --skill N --gear N [--push] [--artifact 8|10|12] [--negative N]`.
+- **Difficulty modifies SKILL dice only** (Trivial +3 ... Average 0 ... Formidable -3). **Help** +1 per able ally, max +3.
+- **Push once:** reroll every die that is not a 6 and not a 1; then 1s on **base** dice = 1 attribute damage + 1 WP, 1s on **gear** dice degrade the item; **skill-die 1s are never banes**. You can never inflict a critical injury on yourself by pushing.
+- The **four attributes ARE the health tracks** (0 = Broken); there is **no HP, AC, levels, or spell slots**. Progression = a **spendable XP pool, no levels**. Defer to `gm-skills`, `gm-combat`, `gm-conditions`, `gm-travel`, `gm-levelup` for procedure.

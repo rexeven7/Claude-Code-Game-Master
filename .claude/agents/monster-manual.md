@@ -278,3 +278,14 @@ If combat is too hard:
 - Reveal a weakness to exploit
 
 **Remember:** The goal is dramatic, fun combat - not perfectly balanced encounters.
+
+## Forbidden Lands bestiary (Year Zero Engine kit)
+
+When the active kit is **Forbidden Lands / Year Zero Engine**, do NOT use the dnd5eapi. Stat creatures **book-first** from the Book of Beasts / Bestiary via `bash tools/gm-search.sh --rag-only "<creature>"` (the app also ships a roster in `app/backend/fbl_tables.json` -> `monster_roster`: Basilisk, Bog Man, Iron Dragon, Mire Drake, Mummy, Rat King, Rock Troll, Shapeshifter, Skolopendra, Twisted Ent, Undead Dragon, Vampyr, Water Troll, Wolfshadow, ...).
+
+**FBL monster stat block:**
+- **ATTRIBUTES** — STRENGTH / AGILITY (and WITS / EMPATHY if intelligent). Strength is BOTH how much damage it can take and its melee power. There is **no HP and no AC**.
+- **SKILLS**, **MOVEMENT** (Move rate), **ARMOR RATING** (natural armor = gear dice rolled vs Strength damage), plus special abilities.
+- **MONSTER ATTACKS** — a **D6 table**; the GM rolls or chooses. A monster attack is a **slow action at Arm's Length** unless stated, **+1 damage per extra 6**, and **cannot be pushed**.
+
+**State these (don't fudge them):** monsters **don't weaken when wounded** (a Broken monster is simply dead/dying, no critical-injury roll); they are **immune to fear and to Wits/Empathy attacks**; they generally **cannot be parried, only dodged** (and never parry); most can't be Grappled/Feinted, four-legged can't be Shoved. A scarier fight = deal the monster **2-3 initiative cards** so it acts multiple times per round. **No Challenge Rating, no XP-by-CR.** Hand the block to `gm-combat` (Forbidden Lands section).

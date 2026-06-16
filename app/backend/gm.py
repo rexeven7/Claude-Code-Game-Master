@@ -35,25 +35,100 @@ def _retrieve(cid, query, k=4):
     except Exception:
         return []
 
-# ---------- on-demand skill rules ----------
+# ---------- kit detection ----------
+def _kit(cid):
+    """Active rules kit: 'fbl' (Year Zero Engine) or 'dnd' (default d20)."""
+    rs = engine._load(engine.campaign_dir(cid) / "ruleset.json")
+    if not rs:
+        kd = engine.kit_dir(cid)
+        rs = engine._load(kd / "ruleset.json") if kd else None
+    rs = rs or {}
+    blob = json.dumps(rs).lower()
+    if ("year zero" in blob or "forbidden lands" in blob
+            or rs.get("resolution", {}).get("model") == "yze-pool"):
+        return "fbl"
+    return "dnd"
+
+# ---------- on-demand skill rules (KIT-AWARE) ----------
 _SKILL_KEYS = [
-    (("attack", "fight", "hit", "strike", "stab", "shoot", "swing", "kill", "slay", "melee", "parry", "dodge", "wound"), "gm-combat"),
-    (("talk", "persuade", "convince", "lie", "intimidate", "charm", "negotiate", "bargain", "threaten"), "gm-social"),
-    (("cast", "spell", "magic", "sorcery", "ritual", "rune"), "gm-spellcasting"),
-    (("cave", "ruin", "dungeon", "crypt", "tunnel", "chamber", "lab", "vault", "explore", "door"), "gm-dungeon"),
-    (("sneak", "climb", "search", "heal", "craft", "track", "hunt", "forage", "swim", "jump", "scout", "lore", "pick", "sleight"), "gm-skills"),
-    (("hungry", "thirsty", "sleepy", "cold", "starv", "freez"), "gm-conditions"),
+    (("level up", "level-up", "spend xp", "spend my xp", "raise my", "improve a skill", "train up", "buy a talent", "new talent", "advance my"), "gm-levelup"),
+    (("attack", "fight", "hit", "strike", "stab", "shoot", "swing", "kill", "slay", "melee", "parry", "dodge", "wound", "ambush", "duel", "charge", "grapple"), "gm-combat"),
+    (("talk", "persuade", "convince", "lie", "intimidate", "charm", "negotiate", "bargain", "threaten", "manipulate", "haggle"), "gm-social"),
+    (("cast", "spell", "magic", "sorcery", "ritual", "rune", "willpower", "power word"), "gm-spellcasting"),
+    (("travel", "journey", "hike", "march", "set out", "head for", "head to", "ride to", "make camp", "forage", "fish", "quarter day", "pathfinder", "lead the way", "hex", "wilderness"), "gm-travel"),
+    (("cave", "ruin", "dungeon", "crypt", "tunnel", "chamber", "vault", "explore", "door", "castle", "adventure site"), "gm-dungeon"),
+    (("sneak", "climb", "search", "heal", "craft", "track", "hunt", "scout", "lore", "pick", "sleight", "swim", "jump", "survive", "insight"), "gm-skills"),
+    (("hungry", "thirsty", "sleepy", "cold", "starv", "freez", "exhaust"), "gm-conditions"),
 ]
 _skill_cache: dict[str, str] = {}
-def _skill_for(action):
+
+def _kit_section(doc, kit):
+    """Return only the active kit's slice of a kit-aware SKILL.md: the shared
+    preamble plus every '## ' section EXCEPT the other kit's. Agnostic skills
+    (no kit headings) are returned whole."""
+    if kit == "fbl":
+        keep, drop = ("forbidden lands", "year zero"), ("d&d", "dnd", "d20")
+    else:
+        keep, drop = ("d&d", "dnd", "d20"), ("forbidden lands", "year zero")
+    parts = re.split(r'(?m)^(##\s+.*)$', doc)
+    if len(parts) < 3:
+        return doc.strip()
+    out = [parts[0]]
+    for i in range(1, len(parts) - 1, 2):
+        head, body = parts[i], parts[i + 1]
+        hl = head.lower()
+        if any(m in hl for m in drop) and not any(m in hl for m in keep):
+            continue
+        out.append(head + body)
+    res = "".join(out).strip()
+    return res or doc.strip()
+
+def _skill_for(cid, action):
     a = (action or "").lower()
+    kit = _kit(cid)
     for keys, skill in _SKILL_KEYS:
         if any(k in a for k in keys):
-            if skill not in _skill_cache:
-                try: _skill_cache[skill] = (engine.REPO / ".claude" / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")[:1800]
-                except Exception: _skill_cache[skill] = ""
-            return skill, _skill_cache[skill]
+            ck = f"{skill}:{kit}"
+            if ck not in _skill_cache:
+                try:
+                    raw = (engine.REPO / ".claude" / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+                    _skill_cache[ck] = _kit_section(raw, kit)[:6000]
+                except Exception:
+                    _skill_cache[ck] = ""
+            return skill, _skill_cache[ck]
     return None, ""
+
+# ---------- FBL structured tables (book-grounded specialist lookups) ----------
+_TABLES_CACHE: dict[str, dict] = {}
+def _tables():
+    if "d" not in _TABLES_CACHE:
+        base = os.path.dirname(os.path.abspath(__file__)); d = {}
+        for fn in ("fbl_tables.json", "fbl_creation.json"):
+            try:
+                d.update(json.load(open(os.path.join(base, fn), encoding="utf-8")))
+            except Exception:
+                pass
+        _TABLES_CACHE["d"] = d
+    return _TABLES_CACHE["d"]
+
+def _tables_lookup(cid, query):
+    """Stand in for the monster-manual / gear-master agents: surface matching
+    book-grounded entries (bestiary roster, playable kins) for the FBL kit."""
+    if _kit(cid) != "fbl":
+        return []
+    q = (query or "").lower(); d = _tables(); hits = []
+    try:
+        for m in d.get("monster_roster", []):
+            nm = (m.get("name") or "").lower()
+            if nm and (nm in q or (len(nm) > 4 and nm.split(",")[0].strip() in q)):
+                hits.append(f"BESTIARY: '{m.get('name')}' is in the Book of Beasts roster - stat it book-first (STR/AGI[+WITS/EMP], a D6 monster-attack table, an Armor Rating; monsters do not weaken when wounded, are immune to fear, and can only be dodged).")
+        kins = d.get("kins") or {}
+        for k in (kins.keys() if isinstance(kins, dict) else kins):
+            if isinstance(k, str) and k.lower() in q:
+                hits.append(f"KIN: {k} is a playable Forbidden Lands kin.")
+    except Exception:
+        pass
+    return hits[:6]
 
 # ---------- tools ----------
 TOOLS = [
@@ -74,14 +149,23 @@ TOOLS = [
 def _system(cid, mode="auto", passages=None, skill_doc=""):
     ch = engine._load(engine.campaign_dir(cid) / "character.json") or {}
     cr = (engine._load(engine.campaign_dir(cid) / "campaign-overview.json") or {}).get("campaign_rules", {})
-    dice_line = ("When an action is uncertain, call roll_dice and STOP -- do NOT narrate the result. The player confirms and rolls in the app, then you narrate the outcome from the returned result (>=1 success works; 0 fails and worsens the situation). "
-                 "Always NAME the roll: pass attribute (STR/AGI/WITS/EMP) and skill_name, with base = the attribute rating, skill = the skill level, gear = the gear bonus.")
+    kit = _kit(cid)
+    if kit == "fbl":
+        dice_line = ("When an action is uncertain, call roll_dice and STOP -- do NOT narrate the result. The player confirms and rolls in the app, then you narrate the outcome from the returned result (>=1 success works; 0 fails and worsens the situation). "
+                     "Always NAME the roll: pass attribute (STR/AGI/WITS/EMP) and skill_name, with base = the attribute rating, skill = the skill level, gear = the gear bonus.")
+        intro = ("You are the Game Master of a Forbidden Lands (Year Zero Engine) campaign. Narrate in a grim, mythic, sparse voice -- one vivid beat at a time, second person, then hand back to the player. "
+                 "There is no HP and no AC: the four attributes (STR/AGI/WITS/EMP) ARE the health tracks (0 = Broken), you hit on a single 6, and damage = the weapon's rating + 1 per extra 6. Push a roll for more 6s at the cost of attribute/gear banes (and +1 Willpower per base-die 1).")
+    else:
+        dice_line = ("When an action is uncertain, call roll_dice and STOP -- do NOT narrate the result. Decide the DC, the player confirms and rolls in the app, then you narrate by margin (>= DC succeeds; below fails and complicates). "
+                     "Always NAME the roll: pass attribute (STR/DEX/CON/INT/WIS/CHA) and skill_name; base = the d20, skill = the ability + proficiency modifier.")
+        intro = ("You are the Game Master of a Dungeons & Dragons 5e campaign. Narrate vividly -- one beat at a time, second person, then hand back to the player. "
+                 "Resolve uncertain actions with a d20 + modifier vs a DC; track HP and AC.")
     header = [
-        "You are the Game Master of a Forbidden Lands (Year Zero Engine) campaign. Narrate in a grim, mythic, sparse voice — one vivid beat at a time, second person, then hand back to the player.",
+        intro,
         dice_line,
-        "Use TOOLS to act: roll_dice, update_character, record_event, move_to, illustrate, lookup. Call them via the tool interface — NEVER write tool names, function calls, or image announcements (no 'BEHOLD', no 'illustrate(...)') in your prose. Apply outcomes with the tools BEFORE narrating them.",
-        "If unsure about a monster, item, NPC, place, or rule, call lookup first and ground your answer in the result — do not guess.",
-        f"GEAR — the PC carries EXACTLY these, never invent others: {(ch.get('inventory') or []) + (ch.get('equipment') or [])}",
+        "Use TOOLS to act: roll_dice, update_character, record_event, move_to, illustrate, lookup. Call them via the tool interface -- NEVER write tool names, function calls, or image announcements (no 'BEHOLD', no 'illustrate(...)') in your prose. Apply outcomes with the tools BEFORE narrating them.",
+        "If unsure about a monster, item, NPC, place, or rule, call lookup first and ground your answer in the result -- do not guess.",
+        f"GEAR -- the PC carries EXACTLY these, never invent others: {(ch.get('inventory') or []) + (ch.get('equipment') or [])}",
         f"TALENTS: {ch.get('features') or []} | pride: {ch.get('pride')} | dark secret: {ch.get('dark_secret')}",
         "GROUND TRUTH: gear/attributes/skills/talents are authoritative; never invent items. End each beat with up to 3 SHORT suggestions, each on its own line as '1.' '2.' '3.'.",
     ]
@@ -167,7 +251,8 @@ def _exec(cid, name, args):
                 f = engine._load(cdir / "facts.json") or {}; f.setdefault(args.get("category", "session_events"), []).append(args["text"]); atomic_write_json(cdir / "facts.json", f)
             return {"ok": True}
         if name == "lookup":
-            return {"passages": _retrieve(cid, args.get("query", ""), 6)}
+            q = args.get("query", "")
+            return {"passages": _retrieve(cid, q, 6) + _tables_lookup(cid, q)}
         if name == "illustrate":
             ch = engine._load(cdir / "character.json") or {}
             try:
@@ -237,7 +322,7 @@ async def run_turn(cid, character, action, emit, provider=None, dice_mode="auto"
     ROOM_MODE[cid] = dice_mode
     ROOMS.setdefault(cid, []).append({"role": "user", "content": f"[{character}] {action}"})
     loc = ((engine._load(engine.campaign_dir(cid) / "campaign-overview.json") or {}).get("player_position") or {}).get("current_location") or ""
-    skill, skill_doc = _skill_for(action)
+    skill, skill_doc = _skill_for(cid, action)
     passages = _retrieve(cid, f"{action} {loc}")
     ROOM_CTX[cid] = (passages, skill, skill_doc)
     if passages: await emit({"type": "rag", "count": len(passages)})

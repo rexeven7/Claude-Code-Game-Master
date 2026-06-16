@@ -167,3 +167,13 @@ You are the bridge between "I need loot" and "here are the complete item statist
 IMPORTANT: USE `grep -c '"Common"' features/loot/static/loot_tables_by_rarity.json` - the file is too big to read all of, just look at the rarity you need.
 
 **NOTE**: This agent generates loot and provides ready-to-run inventory commands. The GM must run the provided commands to persist loot to the character's inventory.
+
+## KIT-AWARE ordering
+
+The Common->Artifact rarity ladder and gp tables above apply **ONLY to the `dnd5e` kit.** For Forbidden Lands and other non-5e kits, generate treasure from the source book.
+
+## Forbidden Lands treasure (Year Zero Engine kit)
+
+- **No rarity tiers, no gp values.** Coin is **copper / silver / gold** (10:1, 10:1) and is **heavy** (100 = Light, 200 = normal, 400 = Heavy).
+- Loot = useful **gear** (with Damage/Bonus or an Armor Rating), **consumables** tracked as Resource Dice (D6-D12), **trade goods**, and rare **ARTIFACTS** (which grant an Artifact Die d8/d10/d12 or a unique power). Pull specifics from the source via RAG or the `gear-master` agent (FBL section).
+- **Reward the journey:** a found map, a legend or rumor, a relic of the Blood Mist, a mount, or simply supplies for the next leg are great FBL finds. Persist everything via `bash tools/gm-player.sh` **before** the reveal.

@@ -192,3 +192,15 @@ You make character creation an exciting first step into adventure! Guide with en
 
 ## Output (IMPORTANT)
 Return character sheet with an ASCII interface customized for the character. Include character and theme appropriate, ASCII art, emoji decorations, or other engaging decoration. 
+
+## KIT-AWARE ordering
+
+The race/class/background/six-ability flow above is the **`dnd5e`** path. For **Forbidden Lands**, build a **Kin + Profession** sheet instead (the app's New Adventure wizard already does this from `app/backend/fbl_creation.json`).
+
+## Forbidden Lands characters (Year Zero Engine kit)
+
+Build in order: **KIN** (Human, Half-Elf, Elf, Dwarf, Halfling, Goblin, Orc, Wolfkin) -> **PROFESSION** (Druid, Fighter, Hunter, Minstrel, Peddler, Rider, Rogue, Sorcerer) -> **AGE** (Young / Adult / Old sets attribute & skill points) -> four **ATTRIBUTES** STRENGTH / AGILITY / WITS / EMPATHY (1-5, key attribute up to 6) -> the **16 SKILLS** (0-5) -> **TALENTS** (one kin + one profession + general) -> **WILLPOWER** (0-10) -> a **PRIDE** and a **DARK SECRET** -> starting **GEAR** + Resource Dice + coins -> **REPUTATION**.
+
+The FBL `character.json` uses `attributes{strength,agility,wits,empathy}` (NOT the six abilities), `skills{<16>}`, `talents`/`features`, `willpower{current,max}`, `pride`, `dark_secret`, `reputation` — and has **no `ac` / `hp` / `level` / `saving_throws`**.
+
+**Always author the 11-field `visual_appearance` block (sex, age, race, species, hair, face, eyes, clothing, gear, demeanor, size)** — this is kit-agnostic and unchanged; it keeps the character on-model in every generated image. Save via `./tools/gm-player.sh save-json '<character_json>'`.

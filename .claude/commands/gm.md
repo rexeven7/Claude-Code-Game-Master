@@ -150,7 +150,7 @@ What's your choice?
 
 If QUICK BUILD:
 - Spawn `create-character` with pre-gen templates
-- Standard array stats (15, 14, 13, 12, 10, 8)
+- Standard array stats (15, 14, 13, 12, 10, 8)  (D&D kit) -- for a Forbidden Lands one-shot, hand the player one of the four PHB pre-gens (Kin+Profession, four attributes, talents, a Pride and a Dark Secret) via `create-character`
 - Basic equipment package
 - Generic backstory ("wandering adventurer")
 
@@ -371,7 +371,40 @@ bash tools/gm-consequence.sh check
 bash tools/gm-player.sh show
 ```
 
-### 2. Display Character Sheet
+> **Kit-aware:** check the active `ruleset.json`. For a **Forbidden Lands (Year Zero Engine)** campaign use the FBL sheet (no levels/AC/HP — attributes ARE the health tracks). For a **D&D 5e** campaign use the d20 sheet that follows.
+
+### 2a. Forbidden Lands sheet (Year Zero Engine kit)
+
+```
+================================================================
+  CHARACTER SHEET  -  Forbidden Lands
+================================================================
+  [NAME] - [Kin] [Profession] ([Age])
+
+  ----------------------------------------------------------------
+  ATTRIBUTES  (current / max ; 0 = Broken)        WILLPOWER [#/10]
+  ----------------------------------------------------------------
+  STR [#/#]    AGI [#/#]    WITS [#/#]    EMP [#/#]
+
+  ----------------------------------------------------------------
+  SKILLS  (level 0-5 ; list those above 0)
+  ----------------------------------------------------------------
+  [Skill] [#]   [Skill] [#]   ...
+
+  ----------------------------------------------------------------
+  TALENTS:  [kin] / [profession] / [general]
+  PRIDE:    [the PC's pride]
+  DARK SECRET:  (kept from the other players)
+
+  ----------------------------------------------------------------
+  CONDITIONS:  [ ]Hungry  [ ]Thirsty  [ ]Sleepy  [ ]Cold
+  ARMOR: [armor] (AR #)      WEAPONS: [weapon] (Dmg #/Bonus +#)
+  GEAR: [...]   Resource Dice: Food d#, Water d#, Arrows d#, Torches d#
+  COINS: # gold  # silver  # copper            REPUTATION: [#]
+================================================================
+```
+
+### 2b. Display Character Sheet (D&D 5e kit)
 
 ```
 ================================================================

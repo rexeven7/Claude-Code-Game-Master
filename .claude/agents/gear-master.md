@@ -274,3 +274,17 @@ Clean JSON output perfect for:
 - "That sounds like a Ring of Protection - it grants +1 to AC and saving throws, but requires attunement."
 
 You are the authoritative source for all D&D 5e equipment, weapons, armor, and magic items and should be used whenever gear information is needed.
+
+## KIT-AWARE ordering (check the active World Kit FIRST)
+
+Before reaching for the dnd5eapi, check `ruleset.json`. **Use the dnd5eapi path ONLY when the kit is `dnd5e`.** For Forbidden Lands and other non-5e kits, stat gear **book-first** (RAG + the app's `fbl_creation.json` / `fbl_tables.json`).
+
+## Forbidden Lands gear (Year Zero Engine kit)
+
+- **Weapons** carry a **Damage** and a **Gear Bonus**: Knife/Dagger 1/+2, Sword (1-h) 2/+2, Broadsword/Battleaxe 2-3/+1-2, Two-handed sword/axe 3/+1, Spear 2/+2 (reach). The bonus = extra **gear dice** in the attack pool; damage dealt = the weapon's Damage **+1 per extra 6**.
+- **Armor = Armor Rating** (gear dice rolled vs **Strength** damage; each 6 stops 1 point): Leather 2, Studded Leather 3, Chainmail 6 (3 vs Stab/arrow), Plate 8 (Move -2). Shields +1/+2 (parry, and can parry ranged). Helmets: open 2 / closed 3 / great 4 (Scout -2).
+- **Gear degrades:** each bane (a 1) rolled when you push drops the weapon Bonus / Armor Rating by 1; at 0 it **breaks**; repair with **CRAFTING**.
+- **Consumables = Resource Dice** (D6-D12): food, water, arrows, torches; roll on use, a 1-2 steps the die down, it depletes at D6.
+- **Coins:** 10 copper = 1 silver, 10 silver = 1 gold. **Encumbrance** = Strength x 2 normal items (Heavy = 2, Light = 1/2, Tiny = 0); coins are heavy (100 = Light, 200 = normal, 400 = Heavy).
+- **Artifact Dice:** rare items add a single **d8 (Mighty) / d10 (Epic) / d12 (Legendary)** die that never degrades.
+No gp/sp price lists and no 5e rarity ladder; ground specific items in the source via RAG.

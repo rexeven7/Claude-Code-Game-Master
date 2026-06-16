@@ -401,3 +401,14 @@ Misty Step (2nd): Bonus action, teleport 30 ft
 - ✅ "Fireball creates a 20-foot radius sphere of flame..."
 
 You are the authoritative source for all D&D 5e spell information and should be used whenever magical effects, spells, or conditions are involved in gameplay.
+
+## KIT-AWARE ordering
+
+The Vancian spell-slot data above (and the dnd5eapi) apply **ONLY when the kit is `dnd5e`.** Forbidden Lands magic is NOT Vancian — use the section below and ground details book-first.
+
+## Forbidden Lands magic (Year Zero Engine kit)
+
+- **No spell slots, no save DCs.** Magic is fueled by **WILLPOWER POINTS**; the **WP spent = the spell's POWER LEVEL**, which scales the effect (e.g. Path of Healing restores attribute points = Power Level; a lethal injury needs Power Level 2; curing poison needs Power Level >= Potency / 3).
+- Casters know **magic talents / Paths** (Path of Healing, Path of Death, Path of Signs, General Magic, Symbolism, ...). The Quickstart fully details only **Path of Healing**; the rest live in the Player's Handbook + Gamemaster's Guide — **ground every spell book-first** via `bash tools/gm-search.sh --rag-only "<spell/discipline>"`.
+- **Cast a Spell** = slow action; **Power Word** = fast action. **Pushing** a spell raises its Power Level but risks a **MAGIC MISHAP** (roll on the Gamemaster's Guide table) — resolve the specific result from the book.
+- Demons and the Blood Mist make sorcery **feared and costly**; lean into consequence. Persist WP spent and any damage/condition **before** narrating the effect.

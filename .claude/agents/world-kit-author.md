@@ -80,3 +80,15 @@ the rules-doc step. Do not author a full rulebook here.
   kit's name/stat_schema/progression — if it errors, your JSON is malformed.
 - Do not emit the generic default (`name: "Generic Adventure"`, empty attributes,
   bare milestone). If your output looks like it could run any world, it is wrong.
+
+
+## Year Zero Engine as a resolution model (for grim / survival / imported books)
+
+`resolution.model` is **not** limited to `d20-vs-dc`. A grim, survival, horror, or gritty world plays best as **Year Zero Engine** — author its `ruleset.json` like the bundled Forbidden Lands kit:
+- `"system": "Year Zero Engine"`, `resolution.model: "yze-pool"`, with `how:` = "Pool of d6 = attribute (Base) + skill (Skill) + gear (Gear); a 6 = success; >=1 success passes; 1s are banes only on a push. Roll: `uv run python lib/dice.py yze --base N --skill N --gear N [--push] [--artifact 12]`".
+- `stat_schema.attributes`: the 3-4 attributes that **double as health tracks** (0 = Broken); `vitals` adds a willpower/stress axis fed by pushing.
+- `progression.model: "xp-levels"` with an **empty `thresholds` array** = a spendable XP pool, no levels (or `milestone` / `resource-axis` if the genre fits better).
+- `active_agents` for a YZE world: `["monster-manual","rules-master","gear-master","loot-dropper","npc-builder","dungeon-architect","world-builder"]` — include `spell-caster` only if the world has Vancian-style magic.
+- Write a `rules.md` modeled on the Forbidden Lands kit's; the play skills (`gm-combat`, `gm-skills`, `gm-conditions`, `gm-travel`, `gm-spellcasting`, `gm-levelup`) will automatically use their **Year Zero Engine** sections when this kit is active.
+
+Pick the resolution model that makes the world PLAY like itself: **d20-vs-dc** for heroic/high fantasy, **yze-pool** for grim survival, **resource-axis** for investigative/horror.

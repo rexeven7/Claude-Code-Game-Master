@@ -49,6 +49,7 @@ SWAP (make the chosen character the active PC):
 | "I talk to..." / "I ask..." | Social/NPC | `gm-social` |
 | "I try to..." | Skill check (d20 vs DC) | `gm-skills` |
 | "I go to..." (cave/ruin) | Dungeon exploration | `gm-dungeon` |
+| "I travel to..." / "we journey" / "make camp" | Overland travel / hex-crawl | `gm-travel` |
 | Apply a condition | Conditions | `gm-conditions` |
 | LEVEL_UP / milestone | Progression (kit's model) | `gm-levelup` |
 | Narrate / voice an NPC | Narration craft | `gm-craft` |
@@ -125,15 +126,23 @@ only for operational lessons that fit nowhere else.
 
 ## Technical Notes
 - **Python:** always `uv run python` (never bare `python`/`python3`).
-- **Saves:** JSON snapshots in each campaign's `saves/`.
-- **Multi-campaign:** tools read `world-state/active-campaign.txt`.
-- **Architecture:** bash wrappers (`tools/`) → Python managers (`lib/`) → per-campaign `world-state/campaigns/<name>/*.json`. The generic core is `game_core.py`; the per-book ruleset is `world_kit.py` (`ruleset.json`).
+- **Saves:**
+---
 
-## The Golden Rules
-1. Fun > Rules. 2. Persist before narrating. 3. Failure creates story (fail forward) — and death IS a valid forward outcome when earned (see Stakes & Death). 4. Players write the story; you set the stage. 5. The world is alive — it goes on without any one hero.
+## The App (`app/`) — Forbidden Lands DM web app
+A FastAPI + React app over THIS engine (it does not reimplement rules). Full architecture + run
+instructions: **`app/README.md`**. Backend `app/backend/` (`main.py` FastAPI+WS, `engine.py`
+campaigns/kit-sharing/`create_fbl_campaign`, `gm.py` GM loop/`dice_step`/`illustrate_now`,
+`fbl_create.py`+`fbl_creation.json` creation, `fbl_generators.py`+`fbl_tables.json` generators);
+frontend `app/frontend/src/App.tsx`+`index.css`.
+- New campaigns start at **Hex I20** (Weatherstone is a rumor) and SHARE the FBL kit (RAG index +
+  site art) via a `kit_ref` pointer; only small state files are copied.
+- Set the active campaign with `CampaignManager.set_active(name)` — there is **no** `.switch()`.
+- RAG needs torch and only runs on the user's machine; structured tables are extracted from the
+  user's PDFs into `fbl_creation.json` / `fbl_tables.json` (real book data). RAG = in-play grounding.
 
-## Deep dives (load on demand)
-Mechanics: the `gm-*` Skills. Craft: `gm-craft`. World Kit + schemas:
-`docs/schema-reference.md`. Import/RAG: `docs/import-guide.md`.
-
-*Run `/gm` to play.*
+## File-editing gotcha (IMPORTANT, this environment)
+The Edit/Write tools CORRUPT files containing non-ASCII (em-dash, ellipsis, curly quotes, emoji) on
+this Windows setup — truncation or UTF-16-style NULL bytes. For any such file (most `.py`, `App.tsx`,
+`index.css`, this CLAUDE.md), edit via **bash/Python with explicit `encoding="utf-8"`**; keep `Edit`
+to ASCII-only changes; after writing, verify no null bytes + `ast.parse` / `tsc --noEmit`.

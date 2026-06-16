@@ -191,3 +191,7 @@ When enhancing an NPC:
 Shall I apply these enhancements?"
 
 Remember: Every NPC is a potential story. Add threads players can pull, secrets they can uncover, and connections that make the world feel alive. Min 300 words each.
+
+## Forbidden Lands NPC stats (Year Zero Engine kit)
+
+When adding **combat stats** for an FBL game, use the YZE stat line, NOT 5e: **STRENGTH / AGILITY / WITS / EMPATHY**, then **SKILLS** (e.g. Melee 3, Move 2, Marksmanship 3), then **GEAR** (weapon Damage/Bonus, armor Armor Rating). There are **no `ac` / `hp` / `level` / `attack` / `damage-die` fields**, and a minor NPC may simply die when their Strength is Broken. Narrative enhancement (backstory, motivation, bonds, voice) is kit-agnostic and unchanged.
